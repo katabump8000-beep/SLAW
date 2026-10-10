@@ -3,94 +3,148 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#7b1e2e"><link rel="icon" href="icon-192.png"><title>SLAW - تصميم الدخول</title>
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#7b1e2e"><link rel="icon" href="icon-192.png">
+<title>SLAW</title>
 <style>
-:root{--bg:#1a0d0f;--card:#2a1519;--m:#7b1e2e;--b:#8b5a3c;--t:#f5e9e2;--mu:#b9a29a;--ln:#4a2a2f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--bg:#160b0e;--card:#26131a;--t:#f2e6d6;--mu:#b39d94;--gold:#cdb27a;--cr:#f2dfa8;--ln:#4a2a2f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--t);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
-.s{display:none;min-height:100vh;padding:28px 22px;flex-direction:column;justify-content:center;gap:14px;max-width:460px;margin:auto;animation:f .3s}
-.s.on{display:flex}@keyframes f{from{opacity:0;transform:translateY(10px)}}
-h1{margin:0;font-size:30px;text-align:center;letter-spacing:4px;background:linear-gradient(90deg,#c0425a,#c98a5e);-webkit-background-clip:text;background-clip:text;color:transparent}
-h2{margin:0;text-align:center;font-size:22px}p{margin:0;color:var(--mu);text-align:center;line-height:1.7}
-input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--ln);background:var(--card);color:var(--t);font-size:16px;text-align:center;outline:none}
-input:focus{border-color:var(--b)}
-.btn{width:100%;padding:14px;border:0;border-radius:12px;color:#fff;font-size:16px;font-weight:700;background:linear-gradient(90deg,var(--m),var(--b));cursor:pointer}
-.btn:active{transform:scale(.97)}.btn.g{background:transparent;border:1px solid var(--b);color:var(--t)}
-.lnk{background:none;border:0;color:#d9a37c;font-size:14px;cursor:pointer;padding:6px}
-.err{color:#ff7b7b;text-align:center;min-height:20px;font-size:14px}
-.lock{font-size:64px;text-align:center;animation:pl 2s infinite}@keyframes pl{50%{transform:scale(1.12)}}
-.stars{text-align:center;font-size:26px;letter-spacing:6px;color:#d9a37c;animation:pl 2.4s infinite}
-.chips{display:flex;gap:8px}.chip{flex:1;padding:12px 4px;border-radius:12px;background:var(--card);border:1px solid var(--ln);color:var(--t);font-size:15px;cursor:pointer}
-.chip.a{border-color:#c0425a}
-.wheel{height:160px;overflow-y:scroll;scroll-snap-type:y mandatory;padding:60px 0;background:var(--card);border-radius:12px;border:1px solid var(--ln);scrollbar-width:none}
-.wheel::-webkit-scrollbar{display:none}.it{height:40px;line-height:40px;text-align:center;scroll-snap-align:center;color:var(--mu);font-size:18px}
-.it.sel{color:var(--t);font-weight:700;font-size:22px}
-.gm{display:flex;align-items:center;justify-content:center;gap:10px;font-size:18px;font-weight:700}.gm svg{width:38px;height:38px}
-.code{display:flex;gap:6px;align-items:center}
-#toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--b);color:#fff;padding:12px 18px;border-radius:12px;opacity:0;transition:.3s;pointer-events:none;max-width:90%;text-align:center;z-index:9}
-#toast.on{opacity:1}
-.top{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
-.hint{font-size:12px;color:var(--mu);text-align:center;border:1px dashed var(--ln);padding:8px;border-radius:10px}
-.md{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:8;padding:20px}.md.on{display:flex}
-.box{background:var(--card);border-radius:18px;padding:22px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px;border:1px solid var(--m)}
-.pw{position:relative}.pw button{position:absolute;left:8px;top:8px}
+.s{display:none;min-height:100vh;padding:26px 20px;flex-direction:column;justify-content:center;gap:14px;max-width:460px;margin:auto}.s.on{display:flex;animation:f .3s}@keyframes f{from{opacity:0;transform:translateY(8px)}}
+h1{margin:0;font-size:30px;text-align:center;letter-spacing:4px;color:var(--cr)}h2{margin:0;text-align:center;font-size:22px}p,.mu{margin:0;color:var(--mu);text-align:center;line-height:1.7;font-size:14px}
+label{color:var(--mu);font-size:13px}
+input{width:100%;padding:13px;border-radius:10px;border:1px solid var(--ln);background:var(--card);color:var(--t);font-size:16px;text-align:center;outline:none}input:focus{border-color:var(--gold)}
+.btn{width:100%;padding:13px;border:2px solid var(--gold);border-radius:4px;color:var(--cr);font-size:16px;font-weight:700;cursor:pointer;position:relative;
+background:linear-gradient(115deg,transparent 47%,rgba(255,255,255,.07) 48%,transparent 49%),linear-gradient(#6d2f42,#4a1f2f);
+box-shadow:inset 0 0 0 2px #4a1f2f,inset 0 0 0 3px rgba(205,178,122,.75),0 3px 8px rgba(0,0,0,.55);text-shadow:0 1px 1px #000a;letter-spacing:.4px}
+.btn:active{transform:translateY(1px);filter:brightness(.88)}.btn:disabled{opacity:.5}.btn.on{filter:brightness(1.25)}
+.ib{width:46px;padding:9px 0;display:flex;align-items:center;justify-content:center}.ib svg{width:22px;height:22px}.sm{width:auto;padding:7px 12px;font-size:14px}
+.err{color:#ff8a8a;text-align:center;min-height:20px;font-size:14px}
+.chips{display:flex;gap:8px}.chip{flex:1;padding:12px 4px;border-radius:8px;background:var(--card);border:1px solid var(--ln);color:var(--t);font-size:15px}.chip.a{border-color:var(--gold)}
+.wheel{height:160px;overflow-y:scroll;scroll-snap-type:y mandatory;padding:60px 0;background:var(--card);border-radius:10px;border:1px solid var(--ln);scrollbar-width:none}.wheel::-webkit-scrollbar{display:none}
+.it{height:40px;line-height:40px;text-align:center;scroll-snap-align:center;color:var(--mu);font-size:18px}.it.sel{color:var(--t);font-weight:700;font-size:22px}
+.hd{display:flex;justify-content:space-between;align-items:center}
+.row{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:10px;margin-top:10px}.row b{display:block}
+.av{width:46px;height:46px;border-radius:50%;background:#3a1c26;color:#b8a07a;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none;border:2px solid var(--gold)}.av img{width:100%;height:100%;object-fit:cover}.av svg{width:60%;height:60%}.av.big{width:120px;height:120px;margin:auto}
+.sp{width:34px;height:34px;border:4px solid var(--ln);border-top-color:var(--gold);border-radius:50%;animation:r .8s linear infinite;margin:10px auto}@keyframes r{to{transform:rotate(360deg)}}
+.dot{position:absolute;top:3px;right:3px;width:12px;height:12px;border-radius:50%;background:#e53935;border:2px solid var(--card)}
+.acts{display:flex;gap:6px}#v2:not([hidden]){display:flex;flex-direction:column;gap:12px}
+#bar{display:none;position:fixed;left:0;right:0;bottom:0;max-width:460px;margin:auto;gap:10px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--ln)}
+.md{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:8;padding:18px}.md.on{display:flex}
+.box{background:var(--card);border-radius:14px;padding:18px;width:100%;max-width:400px;max-height:85vh;overflow:auto;display:flex;flex-direction:column;gap:12px;border:1px solid var(--gold)}
+#toast{position:fixed;bottom:calc(90px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:#4a1f2f;border:1px solid var(--gold);color:var(--cr);padding:11px 16px;border-radius:6px;opacity:0;transition:.3s;pointer-events:none;max-width:90%;text-align:center;z-index:9}#toast.on{opacity:1}
 </style>
 </head>
 <body>
+<div class="s on" id="splash"><h1>SLAW</h1><div class="sp"></div></div>
 
-<div class="s on" id="login"><h1>SLAW</h1><h2>أهلاً بك</h2><p>سجّل دخولك بحساب Google للمتابعة</p><button class="btn" id="gb" onclick="googleLogin()" style="display:flex;align-items:center;justify-content:center;gap:10px"><span style="background:#fff;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 48 48" width="22" height="22"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg></span>المتابعة بحساب Google</button><div class="err" id="lerr"></div></div>
+<div class="s" id="login"><h1>SLAW</h1><h2>أهلاً بك</h2><p>سجّل دخولك بحساب Google للمتابعة</p>
+<button class="btn" onclick="googleLogin()" style="display:flex;align-items:center;justify-content:center;gap:10px"><span style="background:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 48 48" width="20" height="20"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg></span>المتابعة بحساب Google</button><div class="err" id="lerr"></div></div>
 
-<div class="s" id="name"><h2>اسمك؟</h2><input id="nm" placeholder="اكتب اسمك" maxlength="30"><div class="err" id="nerr"></div><button class="btn" onclick="nextName()">التالي</button><button class="lnk" onclick="doOut()">رجوع</button></div>
+<div class="s" id="name"><h2>اسمك؟</h2><input id="nm" placeholder="اكتب اسمك" maxlength="30"><div class="err" id="nerr"></div><button class="btn" onclick="nextName()">التالي</button><button class="btn" onclick="doOut()" style="filter:brightness(.8)">رجوع</button></div>
 
 <div class="s" id="age"><h2>عمرك؟</h2><p>اختر تاريخ ميلادك</p>
 <div class="chips"><button class="chip a" id="cy" onclick="pick('y')">السنة</button><button class="chip" id="cm" onclick="pick('m')">الشهر</button><button class="chip" id="cd" onclick="pick('d')">اليوم</button></div>
-<div class="wheel" id="wy"></div><div class="wheel" id="wm" hidden></div>
-<input id="di" inputmode="numeric" placeholder="اليوم (1 - 31)" hidden>
+<div class="wheel" id="wy"></div><div class="wheel" id="wm" hidden></div><input id="di" inputmode="numeric" placeholder="اليوم (1 - 31)" hidden>
 <div class="err" id="aerr"></div><button class="btn" onclick="nextAge()">إنهاء</button></div>
 
-<div class="s" id="home" style="justify-content:flex-start">
-<div class="top"><h1 style="font-size:24px">SLAW</h1><span id="hid" style="color:var(--mu);font-size:13px"></span></div>
-<h2 id="hw"></h2><p>لا توجد محادثات بعد.<br>طلبات الصداقة ستظهر هنا.</p>
-<button class="btn g" onclick="doOut()">تسجيل الخروج</button></div>
+<div class="s" id="main" style="justify-content:flex-start;padding-bottom:100px">
+<div class="hd"><h1 style="font-size:24px">SLAW</h1><div style="display:flex;gap:8px">
+<button class="btn ib" onclick="openNf()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 8H4c0-1 2-2 2-8M10 21h4"/></svg><i class="dot" id="dot" hidden></i></button>
+<button class="btn ib" onclick="openFm()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-7 7-7s7 3 7 7M19 8v6M16 11h6"/></svg></button></div></div>
+<div id="v1"><div id="lst"></div></div>
+<div id="v2" hidden>
+<div id="mav" onclick="pickPhoto()"></div><button class="btn" onclick="pickPhoto()">تغيير الصورة</button>
+<label>الاسم</label><input id="sn" maxlength="30"><button class="btn" onclick="saveName()">حفظ الاسم</button>
+<label>المعرّف (ID) — حروف إنجليزية صغيرة وأرقام و _ ، من 4 إلى 20</label><input id="si" dir="ltr" maxlength="20"><button class="btn" onclick="saveId()">حفظ المعرّف</button>
+<button class="btn" onclick="doOut()">تسجيل الخروج</button></div>
+</div>
+<div id="bar"><button class="btn on" id="t1" onclick="tab(1)">المحادثات</button><button class="btn" id="t2" onclick="tab(2)">الإعدادات</button></div>
 
-<div class="md" id="md"><div class="box"><h2>اقتراح</h2>
-<button class="btn" onclick="toast('اختيار الصورة قيد التصميم');close_()">تعيين صورة بروفايل</button>
-<button class="btn" onclick="toast('البحث بالمعرّف قيد التصميم');close_()">ابحث عن صديق!</button>
-<button class="lnk" onclick="close_()">لاحقاً</button></div></div>
-<div id="toast"></div>
+<div class="md" id="fm"><div class="box"><h2>إضافة صديق</h2><input id="fid" dir="ltr" placeholder="ضع المعرّف (ID)"><button class="btn" onclick="search()">بحث</button><div id="fres"></div><button class="btn" onclick="closeFm()" style="filter:brightness(.8)">إغلاق</button></div></div>
+<div class="md" id="nf"><div class="box"><h2>الإشعارات</h2><div id="nfl"></div><button class="btn" onclick="closeNf()" style="filter:brightness(.8)">إغلاق</button></div></div>
+<div class="md" id="md"><div class="box"><h2>اقتراح</h2><button class="btn" onclick="sug(1)">تعيين صورة بروفايل</button><button class="btn" onclick="sug(2)">ابحث عن صديق!</button><button class="btn" onclick="close_()" style="filter:brightness(.8)">لاحقاً</button></div></div>
+<div id="toast"></div><input type="file" id="pf" accept="image/*" hidden>
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import{getDatabase,ref,get,set}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import{getDatabase,ref,get,set,update,onValue}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 const app=initializeApp({apiKey:"AIzaSyBlIyelgyQBD0jHPpKve2TOjH1OnZS5LMs",authDomain:"slaw-3a991.firebaseapp.com",databaseURL:"https://slaw-3a991-default-rtdb.europe-west1.firebasedatabase.app",projectId:"slaw-3a991",storageBucket:"slaw-3a991.firebasestorage.app",messagingSenderId:"989570314649",appId:"1:989570314649:web:cb29cd40127e93f2a0e308"});
 const auth=getAuth(app),db=getDatabase(app);
-const $=i=>document.getElementById(i);let D={},Y=null,M=null,busy=false;
+const $=i=>document.getElementById(i);let ME=null,D={},Y=null,M=null,busy=false,RQ={},FR=[],FS=null,offs=[];const PC={};
 const MO=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const ld=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
-const go=id=>{document.querySelectorAll('.s').forEach(x=>x.classList.remove('on'));$(id).classList.add('on');scrollTo(0,0)};
-const toast=t=>{const e=$('toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),3200)};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const go=id=>{document.querySelectorAll('.s').forEach(x=>x.classList.remove('on'));$(id).classList.add('on');$('bar').style.display=id=='main'?'flex':'none';scrollTo(0,0)};
+const toast=t=>{const e=$('toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),3000)};
+const ICON='<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4.5"/><path d="M3.5 21c0-4.6 3.8-8 8.5-8s8.5 3.4 8.5 8z"/></svg>';
+const av=(p,c)=>'<div class="av '+(c||'')+'">'+(p&&p.indexOf('data:image/jpeg;base64,')==0?'<img src="'+p+'">':ICON)+'</div>';
+/* فلتر الأسماء غير اللائقة */
+const lt={'0':'o','1':'i','3':'e','4':'a','5':'s','@':'a','$':'s','!':'i'};
+const nz=s=>s.toLowerCase().replace(/[\u064B-\u065F\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[01345@$!]/g,c=>lt[c]).replace(/[^a-z\u0621-\u064A ]/g,'');
+const cl=s=>s.replace(/(.)\1+/g,'$1');
+const BL=['sex','porn','fuck','shit','bitch','pussy','dick','cock','cunt','whore','slut','nigg','fag','rape','nude','horny','asshole','سكس','منيك','شرموط','عرص','قحب','عاهر','لوطي','متناك','طيز','كسم','كسك','خنيث','ممحون','زاني','بورن','قواد','معرص'].map(w=>cl(nz(w)));
+const BS=['كس','زب','عير','خرا','نيك'].map(w=>cl(nz(w)));
+const bad=s=>{const n=nz(s);if(/x{3,}/.test(n.replace(/ /g,'')))return true;const c=cl(n.replace(/ /g,''));return BL.some(w=>c.includes(w))||n.split(' ').some(t=>BS.includes(cl(t)))};
+/* تسجيل الدخول */
 function mkWheel(id,items,cb){const w=$(id);w.innerHTML=items.map(t=>'<div class="it">'+t+'</div>').join('');w.onscroll=()=>{const i=Math.max(0,Math.min(items.length-1,Math.round(w.scrollTop/40)));w.querySelectorAll('.it').forEach((e,j)=>e.classList.toggle('sel',j===i));cb(i)}}
 function mkWheels(){const ys=[];for(let y=2012;y>=1890;y--)ys.push(y);mkWheel('wy',ys,i=>{Y=ys[i];$('cy').textContent=Y});mkWheel('wm',MO,i=>{M=i+1;$('cm').textContent=MO[i]});pick('y')}
 function pick(k){$('wy').hidden=k!='y';$('wm').hidden=k!='m';$('di').hidden=k!='d';['y','m','d'].forEach(x=>$('c'+x).classList.toggle('a',x==k));if(k!='d'){const w=$(k=='y'?'wy':'wm');w.scrollTop+=1;w.scrollTop-=1;w.dispatchEvent(new Event('scroll'))}}
 $('di').oninput=function(){this.value=this.value.replace(/\D/g,'').slice(0,2);if(+this.value>31)this.value='31';$('cd').textContent=this.value||'اليوم'};
-function nextName(){const n=$('nm').value.trim();if(n.length<2){$('nerr').textContent='اكتب اسمك';return}D.name=n;$('nerr').textContent='';go('age');mkWheels()}
+function nextName(){const n=$('nm').value.trim();if(n.length<2){$('nerr').textContent='اكتب اسمك';return}if(bad(n)){$('nerr').textContent='رجاءً اختر اسماً لائقاً';return}D.name=n;$('nerr').textContent='';go('age');mkWheels()}
 async function nextAge(){if(busy)return;const d=+$('di').value;if(!Y||!M||d<1||d>31){$('aerr').textContent='أكمل السنة والشهر واليوم';return}
-busy=true;$('aerr').textContent='جاري الحفظ...';const u=auth.currentUser;
-try{await mkProfile(u,{name:D.name,dob:Y+'-'+M+'-'+d});$('aerr').textContent='';await finish(u)}catch(e){$('aerr').textContent='تعذّر الحفظ: '+(e.code||e.message)}busy=false}
+busy=true;$('aerr').textContent='جاري الحفظ...';const u=auth.currentUser;try{await mkProfile(u,{name:D.name,dob:Y+'-'+M+'-'+d});$('aerr').textContent='';await finish(u)}catch(e){$('aerr').textContent='تعذّر الحفظ: '+(e.code||e.message)}busy=false}
 async function mkProfile(u,p){let id=null;for(let i=0;i<6&&!id;i++){const c=String(Math.floor(1000000+Math.random()*9000000));try{await set(ref(db,'userIds/'+c),u.uid);id=c}catch(e){}}
 if(!id)throw new Error('تعذر إنشاء المعرّف');await set(ref(db,'users/'+u.uid),{email:u.email,dob:p.dob,createdAt:Date.now()});await set(ref(db,'profiles/'+u.uid),{name:p.name,id:id,photo:'',bio:''})}
-async function finish(u){try{const s=await get(ref(db,'profiles/'+u.uid));
-if(!s.exists()){$('nm').value=(u.displayName||'').slice(0,30);go('name');return}
-const p=s.val();$('hw').textContent='أهلاً '+p.name;$('hid').textContent='المعرّف: '+p.id;go('home');
-if(!ld('slaw_sug')){sv('slaw_sug',1);setTimeout(()=>$('md').classList.add('on'),500)}}catch(e){$('lerr').textContent='خطأ: '+(e.code||e.message);go('login')}}
+async function finish(u){try{const s=await get(ref(db,'profiles/'+u.uid));if(!s.exists()){$('nm').value=(u.displayName||'').slice(0,30);go('name');return}
+ME=Object.assign({uid:u.uid},s.val());startMain()}catch(e){$('lerr').textContent='خطأ: '+(e.code||e.message);go('login')}}
 async function googleLogin(){if(busy)return;busy=true;$('lerr').textContent='';const pr=new GoogleAuthProvider();pr.setCustomParameters({prompt:'select_account'});
-try{await signInWithPopup(auth,pr)}catch(e){
-if(e.code=='auth/popup-blocked'||e.code=='auth/operation-not-supported-in-this-environment'){try{await signInWithRedirect(auth,pr)}catch(x){$('lerr').textContent='خطأ: '+(x.code||x.message)}}
-else if(e.code!='auth/popup-closed-by-user'&&e.code!='auth/cancelled-popup-request')$('lerr').textContent=e.code=='auth/unauthorized-domain'?'النطاق غير مصرّح في Firebase':e.code=='auth/network-request-failed'?'لا يوجد اتصال بالإنترنت':'خطأ: '+(e.code||e.message)}
-busy=false}
-async function doOut(){await signOut(auth).catch(()=>{});go('login')}
-onAuthStateChanged(auth,u=>{if(u&&$('login').classList.contains('on'))finish(u)});
-Object.assign(window,{nextName,pick,nextAge,googleLogin,doOut,go,close_:()=>$('md').classList.remove('on'),toast});
+try{await signInWithPopup(auth,pr)}catch(e){if(e.code=='auth/popup-blocked'||e.code=='auth/operation-not-supported-in-this-environment'){try{await signInWithRedirect(auth,pr)}catch(x){$('lerr').textContent='خطأ: '+(x.code||x.message)}}
+else if(e.code!='auth/popup-closed-by-user'&&e.code!='auth/cancelled-popup-request')$('lerr').textContent=e.code=='auth/network-request-failed'?'لا يوجد اتصال بالإنترنت':'خطأ: '+(e.code||e.message)}busy=false}
+async function doOut(){offs.forEach(f=>f());offs=[];ME=null;await signOut(auth).catch(()=>{});go('login')}
+/* الواجهة الرئيسية */
+async function prof(uid){if(PC[uid])return PC[uid];const s=await get(ref(db,'profiles/'+uid));return PC[uid]=s.val()||{name:'مستخدم',id:'',photo:''}}
+function startMain(){offs.forEach(f=>f());offs=[];PC[ME.uid]=ME;drawMe();
+offs.push(onValue(ref(db,'requests/'+ME.uid),s=>{RQ=s.val()||{};$('dot').hidden=!Object.keys(RQ).length;if($('nf').classList.contains('on'))renderNf()}));
+offs.push(onValue(ref(db,'friends/'+ME.uid),s=>{FR=Object.keys(s.val()||{});renderFr()}));
+tab(1);go('main');if(!ld('slaw_sug')){sv('slaw_sug',1);setTimeout(()=>$('md').classList.add('on'),500)}}
+function drawMe(){$('mav').innerHTML=av(ME.photo,'big');$('sn').value=ME.name;$('si').value=ME.id}
+function tab(n){$('v1').hidden=n!=1;$('v2').hidden=n!=2;$('t1').classList.toggle('on',n==1);$('t2').classList.toggle('on',n==2)}
+async function renderFr(){const l=$('lst');if(!FR.length){l.innerHTML='<p style="margin-top:40px">لا توجد محادثات بعد.<br>اضغط زر إضافة صديق في الأعلى.</p>';return}
+const ps=await Promise.all(FR.map(u=>prof(u)));l.innerHTML=ps.map(p=>'<div class="row" onclick="toast(\'المحادثة في المرحلة القادمة\')">'+av(p.photo)+'<div><b>'+esc(p.name)+'</b><span class="mu">@'+esc(p.id)+'</span></div></div>').join('')}
+function sug(n){close_();if(n==1){tab(2);pickPhoto()}else openFm()}
+const close_=()=>$('md').classList.remove('on');
+/* الإعدادات */
+async function saveName(){const n=$('sn').value.trim();if(n.length<2||n.length>30){toast('الاسم من 2 إلى 30 حرفاً');return}if(bad(n)){toast('رجاءً اختر اسماً لائقاً');return}
+try{await set(ref(db,'profiles/'+ME.uid+'/name'),n);ME.name=n;toast('تم حفظ الاسم')}catch(e){toast('تعذر الحفظ')}}
+async function saveId(){const n=$('si').value.trim().toLowerCase();if(!/^[a-z0-9_]{4,20}$/.test(n)){toast('المعرّف: حروف إنجليزية صغيرة وأرقام و _ ، من 4 إلى 20');return}if(n==ME.id){toast('هذا معرّفك الحالي');return}if(bad(n)){toast('رجاءً اختر معرّفاً لائقاً');return}
+try{if((await get(ref(db,'userIds/'+n))).exists()){toast('هذا المعرّف مستخدم، اختر غيره');return}
+await update(ref(db),{['userIds/'+ME.id]:null,['userIds/'+n]:ME.uid,['profiles/'+ME.uid+'/id']:n});ME.id=n;toast('تم حفظ المعرّف')}catch(e){toast('تعذر الحفظ، جرّب معرّفاً آخر')}}
+function pickPhoto(){$('pf').click()}
+$('pf').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(!f.type.startsWith('image/')){toast('اختر صورة فقط');return}
+$('mav').innerHTML='<div class="av big"><div class="sp"></div></div>';
+try{const b=await createImageBitmap(f),c=document.createElement('canvas');c.width=c.height=256;const m=Math.min(b.width,b.height);c.getContext('2d').drawImage(b,(b.width-m)/2,(b.height-m)/2,m,m,0,0,256,256);
+const d=c.toDataURL('image/jpeg',.72);await set(ref(db,'profiles/'+ME.uid+'/photo'),d);ME.photo=d;PC[ME.uid]=ME;toast('تم تحديث الصورة')}catch(x){toast('تعذر رفع الصورة')}drawMe()};
+/* إضافة صديق */
+const fres=t=>$('fres').innerHTML='<p>'+t+'</p>';
+function openFm(){$('fid').value='';$('fres').innerHTML='';$('fm').classList.add('on')}const closeFm=()=>$('fm').classList.remove('on');
+async function search(){const id=$('fid').value.trim().toLowerCase();if(!/^[a-z0-9_]{4,20}$/.test(id)){fres('المعرّف غير صحيح');return}
+$('fres').innerHTML='<div class="sp"></div><p>جاري البحث عن المعرّف...</p>';
+try{await new Promise(r=>setTimeout(r,600));const s=await get(ref(db,'userIds/'+id));if(!s.exists()){fres('لا يوجد مستخدم بهذا المعرّف');return}const uid=s.val();if(uid==ME.uid){fres('هذا معرّفك أنت 🙂');return}
+const p=await prof(uid),[f,o,i]=await Promise.all([get(ref(db,'friends/'+ME.uid+'/'+uid)),get(ref(db,'requests/'+uid+'/'+ME.uid)),get(ref(db,'requests/'+ME.uid+'/'+uid))]);
+FS={uid,p,st:f.exists()?'f':i.exists()?'in':o.exists()?'out':'no'};drawRes()}catch(e){fres('تعذّر البحث')}}
+function drawRes(){const {p,st}=FS,B={no:'<button class="btn" onclick="sendReq()">إضافة صديق</button>',out:'<button class="btn" onclick="cancelReq()">إلغاء الطلب</button>',in:'<button class="btn" onclick="acc(FS.uid)">قبول الطلب</button>',f:'<p>أنتما صديقان ✓</p>'};
+$('fres').innerHTML='<div class="row">'+av(p.photo)+'<div><b>'+esc(p.name)+'</b><span class="mu">@'+esc(p.id)+'</span></div></div><div style="margin-top:10px">'+B[st]+'</div>'}
+async function sendReq(){try{await set(ref(db,'requests/'+FS.uid+'/'+ME.uid),{ts:Date.now()});FS.st='out';drawRes();toast('تم إرسال الطلب')}catch(e){toast('تعذّر إرسال الطلب')}}
+async function cancelReq(){try{await set(ref(db,'requests/'+FS.uid+'/'+ME.uid),null);FS.st='no';drawRes();toast('تم إلغاء الطلب')}catch(e){toast('تعذّر الإلغاء')}}
+/* الإشعارات */
+function openNf(){$('nf').classList.add('on');renderNf()}const closeNf=()=>$('nf').classList.remove('on');
+async function renderNf(){const k=Object.keys(RQ),b=$('nfl');if(!k.length){b.innerHTML='<p>لا توجد إشعارات.</p>';return}
+const ps=await Promise.all(k.map(u=>prof(u)));b.innerHTML=k.map((u,i)=>'<div class="row" style="flex-wrap:wrap">'+av(ps[i].photo)+'<div style="flex:1"><b>'+esc(ps[i].name)+'</b><span class="mu">أرسل لك طلب صداقة</span></div><div class="acts"><button class="btn sm" onclick="acc(\''+u+'\')">قبول</button><button class="btn sm" onclick="rej(\''+u+'\')">رفض</button><button class="btn sm" onclick="blk(\''+u+'\')">حظر</button></div></div>').join('')}
+async function acc(u){try{await update(ref(db),{['friends/'+ME.uid+'/'+u]:true,['friends/'+u+'/'+ME.uid]:true,['requests/'+ME.uid+'/'+u]:null});toast('تمت الإضافة');if(FS&&FS.uid==u){FS.st='f';drawRes()}}catch(e){toast('تعذّر القبول')}}
+async function rej(u){try{await set(ref(db,'requests/'+ME.uid+'/'+u),null)}catch(e){toast('تعذّر الرفض')}}
+async function blk(u){try{await update(ref(db),{['blocks/'+ME.uid+'/'+u]:true,['requests/'+ME.uid+'/'+u]:null});toast('تم الحظر')}catch(e){toast('تعذّر الحظر')}}
+onAuthStateChanged(auth,u=>{if(u){const c=document.querySelector('.s.on').id;if(c=='splash'||c=='login')finish(u)}else go('login')});
+Object.assign(window,{googleLogin,nextName,nextAge,pick,doOut,tab,openNf,closeNf,openFm,closeFm,search,sendReq,cancelReq,acc,rej,blk,saveName,saveId,pickPhoto,sug,close_,toast});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
