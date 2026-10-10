@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#7b1e2e"><link rel="icon" href="icon-192.png"><title>SLAW - تصميم الدخول</title>
+<style>
+:root{--bg:#1a0d0f;--card:#2a1519;--m:#7b1e2e;--b:#8b5a3c;--t:#f5e9e2;--mu:#b9a29a;--ln:#4a2a2f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--t);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
+.s{display:none;min-height:100vh;padding:28px 22px;flex-direction:column;justify-content:center;gap:14px;max-width:460px;margin:auto;animation:f .3s}
+.s.on{display:flex}@keyframes f{from{opacity:0;transform:translateY(10px)}}
+h1{margin:0;font-size:30px;text-align:center;letter-spacing:4px;background:linear-gradient(90deg,#c0425a,#c98a5e);-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{margin:0;text-align:center;font-size:22px}p{margin:0;color:var(--mu);text-align:center;line-height:1.7}
+input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--ln);background:var(--card);color:var(--t);font-size:16px;text-align:center;outline:none}
+input:focus{border-color:var(--b)}
+.btn{width:100%;padding:14px;border:0;border-radius:12px;color:#fff;font-size:16px;font-weight:700;background:linear-gradient(90deg,var(--m),var(--b));cursor:pointer}
+.btn:active{transform:scale(.97)}.btn.g{background:transparent;border:1px solid var(--b);color:var(--t)}
+.lnk{background:none;border:0;color:#d9a37c;font-size:14px;cursor:pointer;padding:6px}
+.err{color:#ff7b7b;text-align:center;min-height:20px;font-size:14px}
+.lock{font-size:64px;text-align:center;animation:pl 2s infinite}@keyframes pl{50%{transform:scale(1.12)}}
+.stars{text-align:center;font-size:26px;letter-spacing:6px;color:#d9a37c;animation:pl 2.4s infinite}
+.chips{display:flex;gap:8px}.chip{flex:1;padding:12px 4px;border-radius:12px;background:var(--card);border:1px solid var(--ln);color:var(--t);font-size:15px;cursor:pointer}
+.chip.a{border-color:#c0425a}
+.wheel{height:160px;overflow-y:scroll;scroll-snap-type:y mandatory;padding:60px 0;background:var(--card);border-radius:12px;border:1px solid var(--ln);scrollbar-width:none}
+.wheel::-webkit-scrollbar{display:none}.it{height:40px;line-height:40px;text-align:center;scroll-snap-align:center;color:var(--mu);font-size:18px}
+.it.sel{color:var(--t);font-weight:700;font-size:22px}
+.gm{display:flex;align-items:center;justify-content:center;gap:10px;font-size:18px;font-weight:700}.gm svg{width:38px;height:38px}
+.code{display:flex;gap:6px;align-items:center}
+#toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--b);color:#fff;padding:12px 18px;border-radius:12px;opacity:0;transition:.3s;pointer-events:none;max-width:90%;text-align:center;z-index:9}
+#toast.on{opacity:1}
+.top{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
+.hint{font-size:12px;color:var(--mu);text-align:center;border:1px dashed var(--ln);padding:8px;border-radius:10px}
+.md{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:8;padding:20px}.md.on{display:flex}
+.box{background:var(--card);border-radius:18px;padding:22px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px;border:1px solid var(--m)}
+.pw{position:relative}.pw button{position:absolute;left:8px;top:8px}
+</style>
+</head>
+<body>
+
+<div class="s on" id="login">
+<h1>SLAW</h1><h2>تسجيل الدخول</h2>
+<input id="le" type="email" placeholder="البريد الإلكتروني" dir="ltr">
+<input id="lp" type="password" placeholder="كلمة السر" dir="ltr">
+<div class="err" id="lerr"></div>
+<button class="btn" onclick="doLogin()">دخول</button>
+<button class="lnk" onclick="startReset()">هل نسيت كلمة سر حسابك؟</button>
+<button class="btn g" onclick="startCreate()">إنشاء حساب</button>
+<div class="hint">نسخة تصميم تجريبية: البيانات تُحفظ على جهازك فقط، والرمز يظهر في رسالة بدل البريد.</div>
+</div>
+
+<div class="s" id="name"><h2>اسمك؟</h2><input id="nm" placeholder="اكتب اسمك" maxlength="30"><div class="err" id="nerr"></div><button class="btn" onclick="nextName()">التالي</button><button class="lnk" onclick="go('login')">رجوع</button></div>
+
+<div class="s" id="age"><h2>عمرك؟</h2><p>اختر تاريخ ميلادك</p>
+<div class="chips"><button class="chip a" id="cy" onclick="pick('y')">السنة</button><button class="chip" id="cm" onclick="pick('m')">الشهر</button><button class="chip" id="cd" onclick="pick('d')">اليوم</button></div>
+<div class="wheel" id="wy"></div><div class="wheel" id="wm" hidden></div>
+<input id="di" inputmode="numeric" placeholder="اليوم (1 - 31)" hidden>
+<div class="err" id="aerr"></div><button class="btn" onclick="nextAge()">التالي</button></div>
+
+<div class="s" id="mail"><h2>ضع بريدك الإلكتروني</h2><input id="em" type="email" placeholder="example@gmail.com" dir="ltr"><div class="err" id="eerr"></div><button class="btn" onclick="sendCode()">تحقق</button><button class="lnk" onclick="go('login')">رجوع</button></div>
+
+<div class="s" id="ver">
+<div class="gm"><svg viewBox="0 0 48 48"><path fill="#4caf50" d="M45 16.2l-5 2.75-5 4.75V40h7c1.66 0 3-1.34 3-3V16.2z"/><path fill="#1e88e5" d="M3 16.2l3.61 1.96L13 23.7V40H6c-1.66 0-3-1.34-3-3V16.2z"/><polygon fill="#e53935" points="35,11.2 24,19.45 13,11.2 12,17 13,23.7 24,31.95 35,23.7 36,17"/><path fill="#c62828" d="M3 12.3v3.9l10 7.5V11.2L9.88 8.87C7.19 6.85 3 8.77 3 12.3z"/><path fill="#fbc02d" d="M45 12.3v3.9l-10 7.5V11.2l3.12-2.33C40.81 6.85 45 8.77 45 12.3z"/></svg><span>تفقد تطبيق GMAIL واحضر الرمز</span></div>
+<input id="vc" inputmode="numeric" maxlength="6" placeholder="------" dir="ltr" style="letter-spacing:8px;font-size:22px">
+<div class="err" id="verr"></div><button class="btn" onclick="checkCode()">تأكيد</button>
+<button class="btn g" id="rs" onclick="resend()">إعادة إرسال رمز التحقق</button><button class="lnk" onclick="go('login')">إلغاء</button></div>
+
+<div class="s" id="pass"><div class="lock">🔒</div><div class="stars">****</div><h2 id="pt">عيّن كلمة السر</h2>
+<div class="pw"><input id="pp" type="text" placeholder="ضع كلمة السر (8 خانات فأكثر)" dir="ltr"><button class="lnk" onclick="rnd()">كلمة عشوائية</button></div>
+<div class="err" id="perr"></div><button class="btn" onclick="savePass()">متابعة</button></div>
+
+<div class="s" id="home" style="justify-content:flex-start">
+<div class="top"><h1 style="font-size:24px">SLAW</h1><span id="hid" style="color:var(--mu);font-size:13px"></span></div>
+<h2 id="hw"></h2><p>لا توجد محادثات بعد.<br>طلبات الصداقة ستظهر هنا.</p>
+<button class="btn g" onclick="localStorage.removeItem('slaw_s');go('login')">تسجيل الخروج</button></div>
+
+<div class="md" id="md"><div class="box"><h2>اقتراح</h2>
+<button class="btn" onclick="toast('اختيار الصورة قيد التصميم');close_()">تعيين صورة بروفايل</button>
+<button class="btn" onclick="toast('البحث بالمعرّف قيد التصميم');close_()">ابحث عن صديق!</button>
+<button class="lnk" onclick="close_()">لاحقاً</button></div></div>
+<div id="toast"></div>
+
+<script>
+var APP='SLAW',$=function(i){return document.getElementById(i)},D={},mode='create',code='',Y=null,M=null;
+var MO=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+function ld(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
+function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function go(id){document.querySelectorAll('.s').forEach(function(x){x.classList.remove('on')});$(id).classList.add('on');window.scrollTo(0,0)}
+function toast(t){var e=$('toast');e.textContent=t;e.classList.add('on');setTimeout(function(){e.classList.remove('on')},3200)}
+function vib(){if(navigator.vibrate)navigator.vibrate(60)}
+function close_(){$('md').classList.remove('on')}
+function ok(e){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)}
+function startCreate(){if(ld('slaw_dev')){$('lerr').textContent='قمت بإنشاء حساب بالفعل على هذا الجهاز.';return}mode='create';D={};go('name')}
+function nextName(){var n=$('nm').value.trim();if(n.length<2){$('nerr').textContent='اكتب اسمك';return}D.name=n;go('age');mkWheels()}
+function mkWheel(id,items,cb){var w=$(id);w.innerHTML=items.map(function(t){return'<div class="it">'+t+'</div>'}).join('');
+w.onscroll=function(){var i=Math.max(0,Math.min(items.length-1,Math.round(w.scrollTop/40)));w.querySelectorAll('.it').forEach(function(e,j){e.classList.toggle('sel',j===i)});cb(i)}}
+function mkWheels(){var ys=[];for(var y=2012;y>=1890;y--)ys.push(y);mkWheel('wy',ys,function(i){Y=ys[i];$('cy').textContent=Y});mkWheel('wm',MO,function(i){M=i+1;$('cm').textContent=MO[i]});pick('y')}
+function pick(k){$('wy').hidden=k!='y';$('wm').hidden=k!='m';$('di').hidden=k!='d';['y','m','d'].forEach(function(x){$('c'+x).classList.toggle('a',x==k)});var w=$(k=='y'?'wy':'wm');if(k!='d'){w.scrollTop=w.scrollTop+1;w.scrollTop=w.scrollTop-1;w.dispatchEvent(new Event('scroll'))}}
+$('di').oninput=function(){this.value=this.value.replace(/\D/g,'').slice(0,2);if(+this.value>31)this.value='31';$('cd').textContent=this.value||'اليوم'};
+function nextAge(){var d=+$('di').value;if(!Y||!M||d<1||d>31){$('aerr').textContent='أكمل السنة والشهر واليوم';return}D.dob=Y+'-'+M+'-'+d;go('mail')}
+function sendCode(){var e=$('em').value.trim().toLowerCase();if(!ok(e)){$('eerr').textContent='البريد غير صحيح';return}
+if(ld('slaw_u_'+e)){$('eerr').textContent='هذا البريد مسجّل مسبقاً';return}D.email=e;gen();go('ver')}
+function gen(){code=String(Math.floor(100000+Math.random()*900000));toast('رمز تجريبي (سيصل لبريدك لاحقاً): '+code)}
+function resend(){gen();$('verr').textContent='';var b=$('rs');b.disabled=true;setTimeout(function(){b.disabled=false},15000)}
+function checkCode(){if($('vc').value.trim()!==code){$('verr').textContent='الرمز غير صحيح';return}$('vc').value='';$('pt').textContent=mode=='reset'?'إعادة تعيين كلمة المرور':'عيّن كلمة السر';$('pp').value='';go('pass')}
+function rnd(){var L='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',N='0123456789',A=L+N,a=new Uint32Array(14),p='';crypto.getRandomValues(a);for(var i=0;i<14;i++)p+=A[a[i]%A.length];
+p=p.slice(0,12)+L[a[0]%L.length]+N[a[1]%N.length];$('pp').value=p;vib();try{navigator.clipboard.writeText(p)}catch(e){}toast('تم نسخ كلمة المرور!')}
+function savePass(){var p=$('pp').value;if(p.length<8){$('perr').textContent='كلمة السر 8 خانات على الأقل';return}
+if(mode=='reset'){var u=ld('slaw_u_'+D.email);u.pw=p;sv('slaw_u_'+D.email,u);toast('تم تغيير كلمة المرور');go('login');return}
+D.pw=p;D.id=String(Math.floor(1000000+Math.random()*9000000));sv('slaw_u_'+D.email,D);sv('slaw_dev',1);enter(D)}
+function doLogin(){var e=$('le').value.trim().toLowerCase(),u=ld('slaw_u_'+e);
+if(!u){$('lerr').textContent='البريد خطأ';return}if(u.pw!==$('lp').value){$('lerr').textContent='كلمة المرور خاطئة';return}enter(u)}
+function enter(u){$('lerr').textContent='';$('hw').textContent='أهلاً '+u.name;$('hid').textContent='المعرّف: '+u.id;go('home');setTimeout(function(){$('md').classList.add('on')},500)}
+function startReset(){mode='reset';var e=$('le').value.trim().toLowerCase();if(!ok(e)){$('lerr').textContent='اكتب بريدك في الحقل أولاً';return}
+if(!ld('slaw_u_'+e)){$('lerr').textContent='البريد خطأ';return}D={email:e};$('lerr').textContent='';gen();go('ver')}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
+</script>
+</body>
+</html>
