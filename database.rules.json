@@ -64,7 +64,7 @@
         "messages": {
           "$mid": {
             ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&((!data.exists()&&newData.child('from').val()===auth.uid&&root.child('friends/'+auth.uid+'/'+$chatId.replace(auth.uid,'').replace('_','')).exists()&&!root.child('blocks/'+$chatId.replace(auth.uid,'').replace('_','')+'/'+auth.uid).exists()&&!root.child('blocks/'+auth.uid+'/'+$chatId.replace(auth.uid,'').replace('_','')).exists())||(data.exists()&&!newData.exists()&&data.child('from').val()===auth.uid))",
-            ".validate": "newData.hasChildren(['from','to','type','text','ts'])&&((newData.child('from').val()===auth.uid&&newData.child('to').val()==$chatId.replace(auth.uid,'').replace('_',''))||(newData.child('from').val()==$chatId.replace(auth.uid,'').replace('_','')&&newData.child('to').val()===auth.uid))",
+            ".validate": "newData.hasChildren(['from','to','type','ts'])&&((newData.child('from').val()===auth.uid&&newData.child('to').val()==$chatId.replace(auth.uid,'').replace('_',''))||(newData.child('from').val()==$chatId.replace(auth.uid,'').replace('_','')&&newData.child('to').val()===auth.uid))&&(newData.child('type').val()!=='text'||newData.hasChild('text'))&&(newData.child('type').val()==='text'||newData.hasChild('mediaKey'))",
             "from": {
               ".validate": "newData.val()===auth.uid||newData.val()==$chatId.replace(auth.uid,'').replace('_','')"
             },
@@ -72,7 +72,7 @@
               ".validate": "newData.val()===auth.uid||newData.val()==$chatId.replace(auth.uid,'').replace('_','')"
             },
             "type": {
-              ".validate": "newData.val()==='text'"
+              ".validate": "newData.val()==='text'||newData.val()==='image'||newData.val()==='audio'||newData.val()==='file'"
             },
             "text": {
               ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&data.parent().child('from').val()===auth.uid",
@@ -139,6 +139,32 @@
                 }
               }
             },
+            "mediaKey": {
+              ".validate": "newData.isString()&&newData.val().matches(/^[a-z0-9]{6,30}$/)"
+            },
+            "thumb": {
+              ".validate": "newData.isString()&&newData.val().beginsWith('data:image/jpeg;base64,')&&newData.val().length<4000"
+            },
+            "w": {
+              ".validate": "newData.isNumber()&&newData.val()>0&&newData.val()<=5000"
+            },
+            "h": {
+              ".validate": "newData.isNumber()&&newData.val()>0&&newData.val()<=5000"
+            },
+            "dur": {
+              ".validate": "newData.isNumber()&&newData.val()>=0&&newData.val()<=600"
+            },
+            "fileName": {
+              ".validate": "newData.isString()&&newData.val().length<=100"
+            },
+            "downloaded": {
+              ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&data.parent().child('to').val()===auth.uid",
+              ".validate": "newData.val()===true"
+            },
+            "downloadedAt": {
+              ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&data.parent().child('to').val()===auth.uid",
+              ".validate": "newData.isNumber()"
+            },
             "$other": {
               ".validate": false
             }
@@ -182,6 +208,24 @@
         },
         "$other": {
           ".validate": false
+        }
+      }
+    },
+    "media": {
+      "$chatId": {
+        "$key": {
+          ".read": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))",
+          ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&((!data.exists()&&newData.child('u').val()===auth.uid&&root.child('friends/'+auth.uid+'/'+$chatId.replace(auth.uid,'').replace('_','')).exists()&&!root.child('blocks/'+$chatId.replace(auth.uid,'').replace('_','')+'/'+auth.uid).exists()&&!root.child('blocks/'+auth.uid+'/'+$chatId.replace(auth.uid,'').replace('_','')).exists())||(data.exists()&&!newData.exists()&&data.child('u').val()===auth.uid))",
+          ".validate": "newData.hasChildren(['d','u'])",
+          "d": {
+            ".validate": "newData.isString()&&newData.val().beginsWith('data:')&&newData.val().length<2300000"
+          },
+          "u": {
+            ".validate": "newData.val()===auth.uid"
+          },
+          "$other": {
+            ".validate": false
+          }
         }
       }
     }

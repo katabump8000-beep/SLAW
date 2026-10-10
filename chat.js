@@ -21,6 +21,13 @@ const BASE = new URL('.', import.meta.url);
 const VER = new URL(import.meta.url).search;            // مثل ?v=1 (نفس رقم النسخة)
 const PAGE = 40;                                        // رسائل كل صفحة تحميل
 const MAX_TEXT = 2000;
+const MAX_FILE_BYTES = 1500000;          // أقصى حجم ملف/صوت قبل التحويل (≈ 1.5MB)
+const MAX_DATA_CHARS = 2200000;          // أقصى طول للنص المحفوظ في القاعدة (يوافق القواعد)
+const MAX_REC_SECS = 180;                // أقصى مدة تسجيل عادي
+const MAX_MERGE_SECS = 60;               // أقصى مدة عند إكمال مسودة
+const RE_IMG = /^data:image\/(jpeg|png|webp|gif);base64,/;
+const RE_AUD = /^data:audio\//;
+const RE_KEY = /^[a-z0-9]{6,30}$/;
 const QUICK_MSG = '💙🩶🩵🤍💜 باي 🤎🧡💛💚❤️';
 const MODELS = [
   { id: 1, s: 1.28, n: 'الأزرار كبيرة جداً' },
@@ -75,6 +82,97 @@ const Platform = {
     const c = this._click; if (!c.pool.length) return;
     const a = c.pool[c.i++ % c.pool.length];
     try { a.currentTime = 0; const p = a.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+  },
+
+  /* اختيار ملف  ← Capacitor: File Picker / Camera plugin */
+  pickFile(accept) {
+    return new Promise(res => {
+      const i = document.createElement('input');
+      i.type = 'file'; i.accept = accept || '*/*'; i.style.display = 'none';
+      i.addEventListener('change', () => { const f = i.files && i.files[0] || null; i.remove(); res(f); });
+      i.addEventListener('cancel', () => { i.remove(); res(null); });
+      document.body.appendChild(i); i.click();
+    });
+  },
+  /* حفظ ملف على الجهاز  ← Capacitor: @capacitor/filesystem */
+  saveBlob(blob, name) {
+    const obj = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = obj; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(obj), 4000);
+  },
+  /* الميكروفون  ← Capacitor: plugin تسجيل صوت إن لم يعمل getUserMedia في WebView */
+  getMic() { return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); },
+  recMime() {
+    const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
+    return (window.MediaRecorder && types.find(t => MediaRecorder.isTypeSupported(t))) || '';
+  },
+  /* ضغط الصور (canvas — يعمل في WebView) */
+  blobToDataUrl(blob) {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result); r.onerror = () => rej(r.error);
+      r.readAsDataURL(blob);
+    });
+  },
+  compressImage(file, maxDim, quality) {
+    return new Promise((res, rej) => {
+      const img = new Image();
+      const u = URL.createObjectURL(file);
+      img.onload = () => {
+        let w = img.naturalWidth, h = img.naturalHeight;
+        const sc = Math.min(1, maxDim / Math.max(w, h));
+        w = Math.max(1, Math.round(w * sc)); h = Math.max(1, Math.round(h * sc));
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(u);
+        c.toBlob(b => b ? res({ blob: b, w, h }) : rej(new Error('blob')), 'image/jpeg', quality);
+      };
+      img.onerror = () => { URL.revokeObjectURL(u); rej(new Error('img')); };
+      img.src = u;
+    });
+  },
+  /* المسودات الصوتية: IndexedDB (تعمل في WebView) */
+  _ddb: null,
+  _dopen() {
+    return new Promise((res, rej) => {
+      if (this._ddb) return res(this._ddb);
+      if (!window.indexedDB) return rej(new Error('no-idb'));
+      const r = indexedDB.open('slawchat_drafts', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('d');
+      r.onsuccess = () => { this._ddb = r.result; res(this._ddb); };
+      r.onerror = () => rej(r.error);
+    });
+  },
+  async draftGet(k) {
+    try {
+      const db0 = await this._dopen();
+      return await new Promise(res => {
+        const q = db0.transaction('d').objectStore('d').get(k);
+        q.onsuccess = () => res(q.result || null); q.onerror = () => res(null);
+      });
+    } catch (e) { return null; }
+  },
+  async draftSet(k, v) {
+    const db0 = await this._dopen();
+    return new Promise((res, rej) => {
+      const tx = db0.transaction('d', 'readwrite');
+      tx.objectStore('d').put(v, k);
+      tx.oncomplete = () => res(true); tx.onerror = () => rej(tx.error);
+    });
+  },
+  async draftDel(k) {
+    try {
+      const db0 = await this._dopen();
+      await new Promise(res => {
+        const tx = db0.transaction('d', 'readwrite');
+        tx.objectStore('d').delete(k); tx.oncomplete = () => res(); tx.onerror = () => res();
+      });
+    } catch (e) {}
   },
 
   /* البطارية  ← Capacitor: @capacitor/device (Device.getBatteryInfo) */
@@ -510,11 +608,154 @@ function isViewing() {
 }
 function msgRef(id) { return ref(db, `chats/${S.chatId}/messages/${id}`); }
 
-function buildContent(msg, blurred) {
+/* ---------- الوسائط: تُحفظ في media/{chatId}/{key} ---------- */
+const mediaCache = new Map();
+async function mediaUrl(msg) {
+  const key = msg && msg.mediaKey;
+  if (typeof key !== 'string' || !RE_KEY.test(key) || !S.chatId) return '';
+  const ck = S.chatId + '/' + key;
+  if (mediaCache.has(ck)) return mediaCache.get(ck);
+  const v = (await get(ref(db, `media/${ck}/d`))).val();
+  if (typeof v !== 'string') return '';
+  if (msg.type === 'image' && !RE_IMG.test(v)) return '';
+  if (msg.type === 'audio' && !RE_AUD.test(v)) return '';
+  if (mediaCache.size > 12) mediaCache.delete(mediaCache.keys().next().value);
+  mediaCache.set(ck, v);
+  return v;
+}
+function dataUrlToBlob(u) {
+  const m = /^data:([^;,]*)(;base64)?,(.*)$/s.exec(u);
+  if (!m) return new Blob([]);
+  const bin = atob(m[3]); const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: m[1] || 'application/octet-stream' });
+}
+const MIME_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif',
+  'audio/webm': 'webm', 'audio/mpeg': 'mp3', 'audio/ogg': 'ogg', 'audio/wav': 'wav', 'audio/mp4': 'm4a',
+  'application/pdf': 'pdf', 'text/plain': 'txt' };
+function safeFileName(name, mime, type) {
+  name = String(name || 'file').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').trim().slice(0, 80) || 'file';
+  if (/\.[A-Za-z0-9]{2,5}$/.test(name)) return name;
+  const ext = MIME_EXT[(mime || '').split(';')[0]] || (type === 'image' ? 'jpg' : type === 'audio' ? 'webm' : '');
+  return ext ? name + '.' + ext : name;
+}
+async function downloadMsg(msg, id) {
+  toast('⬇ جاري التنزيل...');
+  try {
+    const u = await mediaUrl(msg);
+    if (!u) { toast('تعذّر تحميل الملف'); return; }
+    const blob = dataUrlToBlob(u);
+    Platform.saveBlob(blob, safeFileName(msg.fileName, blob.type, msg.type));
+    toast('تم التنزيل ✔');
+    /* عند تحميل الطرف الآخر → يظهر "قام بتحميلها ♻️" للطرفين */
+    if (msg.from !== me && id && !msg.downloaded) {
+      update(msgRef(id), { downloaded: true, downloadedAt: serverTimestamp() }).catch(() => {});
+    }
+  } catch (e) { console.error(e); toast('تعذّر التنزيل'); }
+}
+function makeDlBtn(msg, id) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'msg-dl'; b.textContent = '⬇ تنزيل';
+  b.addEventListener('click', e => { e.stopPropagation(); downloadMsg(msg, id); });
+  return b;
+}
+let io = null;
+function lazyLoad(el, fn) {
+  if (!('IntersectionObserver' in window)) { fn(); return; }
+  if (!io) io = new IntersectionObserver(entries => entries.forEach(e => {
+    if (e.isIntersecting) { io.unobserve(e.target); if (e.target._load) e.target._load(); }
+  }), { root: messagesEl(), rootMargin: '300px' });
+  el._load = fn; io.observe(el);
+}
+async function openViewer(msg, id) {
+  const body = $('#viewer-body'); body.innerHTML = '';
+  const img = document.createElement('img'); img.alt = '';
+  if (isPhoto(msg.thumb)) img.src = msg.thumb;
+  body.appendChild(img);
+  $('#viewer-download').onclick = () => downloadMsg(msg, id);
+  $('#viewer').classList.add('open');
+  try { const u = await mediaUrl(msg); if (u) img.src = u; } catch (e) {}
+}
+
+function buildAudio(msg, id) {
+  const w = document.createElement('div');
+  w.className = 'aud';
+  const seed = hashStr(String(id || msg.ts || 'x'));
+  let bars = '';
+  for (let i = 0; i < 30; i++) bars += `<i style="height:${Math.round(24 + Math.abs(Math.sin(seed + i * 1.7)) * 70)}%"></i>`;
+  w.innerHTML = `<div class="aud-lbl">🎧 استمع إليها</div>
+    <div class="aud-row"><button type="button" class="aud-play">▶</button>
+    <div class="aud-bars">${bars}</div><span class="aud-time">${fmtDur(msg.dur || 0)}</span></div>`;
+  const btn = w.querySelector('.aud-play'), barsEl = w.querySelector('.aud-bars'), timeEl = w.querySelector('.aud-time');
+  const bs = [...barsEl.children];
+  const a = new Audio(); a.preload = 'none';
+  let loaded = false;
+  const dur = () => (isFinite(a.duration) && a.duration > 0) ? a.duration : (msg.dur || 0);
+  const paint = p => { const on = Math.round(p * bs.length); bs.forEach((b, i) => b.classList.toggle('on', i < on)); };
+  async function ensure() {
+    if (loaded) return true;
+    btn.textContent = '⏳';
+    let u = '';
+    try { u = await mediaUrl(msg); } catch (e) {}
+    if (!u) { btn.textContent = '▶'; toast('تعذّر تحميل الصوت'); return false; }
+    a.src = u; loaded = true; return true;
+  }
+  btn.addEventListener('click', async e => {
+    e.stopPropagation();
+    if (!a.paused) { a.pause(); return; }
+    if (!(await ensure())) return;
+    if (curAudio && curAudio !== a) curAudio.pause();
+    curAudio = a;
+    try { await a.play(); } catch (err) { btn.textContent = '▶'; toast('تعذّر تشغيل الصوت'); }
+  });
+  a.addEventListener('play', () => { btn.textContent = '⏸'; w.classList.add('playing'); });
+  a.addEventListener('pause', () => { btn.textContent = '▶'; w.classList.remove('playing'); });
+  a.addEventListener('ended', () => { btn.textContent = '▶'; w.classList.remove('playing'); paint(0); timeEl.textContent = fmtDur(dur()); });
+  a.addEventListener('timeupdate', () => { const d = dur(); if (d) paint(a.currentTime / d); timeEl.textContent = fmtDur(a.currentTime); });
+  barsEl.addEventListener('click', async e => {
+    e.stopPropagation();
+    if (!(await ensure())) return;
+    const r = barsEl.getBoundingClientRect();
+    const frac = Math.min(1, Math.max(0, (r.right - e.clientX) / r.width));   // RTL
+    const d = dur();
+    if (d) { try { a.currentTime = frac * d; } catch (err) {} }
+    if (a.paused) btn.click();
+  });
+  return w;
+}
+let curAudio = null;
+function fmtDur(s) {
+  s = Math.max(0, Math.round(s || 0));
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+function buildContent(msg, id, blurred) {
   const content = document.createElement('div');
   content.className = 'msg-content';
-  if (msg.type && msg.type !== 'text') {
-    content.textContent = '📎 مرفق (يُدعم في المرحلة ج)';
+  if (msg.type === 'image') {
+    const img = document.createElement('img');
+    img.className = 'msg-image'; img.alt = ''; img.decoding = 'async';
+    if (Number(msg.w) > 0 && Number(msg.h) > 0) img.style.aspectRatio = Number(msg.w) + ' / ' + Number(msg.h);
+    if (isPhoto(msg.thumb)) img.src = msg.thumb;
+    img.classList.add('lazy-blur');
+    lazyLoad(img, () => {
+      mediaUrl(msg).then(u => { if (u) { img.src = u; img.classList.remove('lazy-blur'); } }).catch(() => {});
+    });
+    img.addEventListener('click', e => { e.stopPropagation(); openViewer(msg, id); });
+    content.appendChild(img);
+    content.appendChild(makeDlBtn(msg, id));
+  } else if (msg.type === 'audio') {
+    content.appendChild(buildAudio(msg, id));
+    content.appendChild(makeDlBtn(msg, id));
+  } else if (msg.type === 'file') {
+    const wrap = document.createElement('div');
+    wrap.className = 'msg-file';
+    const ico = document.createElement('span'); ico.className = 'f-ico'; ico.textContent = '📄';
+    const box = document.createElement('div');
+    const nm = document.createElement('div'); nm.className = 'f-name'; nm.textContent = String(msg.fileName || 'ملف');
+    box.appendChild(nm); box.appendChild(makeDlBtn(msg, id));
+    wrap.appendChild(ico); wrap.appendChild(box);
+    content.appendChild(wrap);
   } else if (blurred) {
     content.textContent = String(msg.text || '').slice(0, 160).replace(/[^\s]/g, '▒');   // لا نص حقيقي في الصفحة
   } else {
@@ -553,8 +794,14 @@ function buildRow(msg, id, opts) {
     bubble.appendChild(r);
   }
 
-  const content = buildContent(msg, blurred);
+  const content = buildContent(msg, id, blurred);
   bubble.appendChild(content);
+
+  if (msg.downloaded && !isText) {
+    const dn = document.createElement('div');
+    dn.className = 'dl-note'; dn.textContent = 'قام بتحميلها ♻️';
+    bubble.appendChild(dn);
+  }
 
   /* السطر السفلي: منذ ... / تم تعديلها / √ */
   const meta = document.createElement('div');
@@ -608,13 +855,13 @@ function buildRow(msg, id, opts) {
   let longPressed = false;
   bubble.addEventListener('click', e => {
     if (longPressed) { longPressed = false; return; }
-    if (e.target.closest('.msg-actions, .msg-edit, .msg-reply')) return;
+    if (e.target.closest('.msg-actions, .msg-edit, .aud, .msg-reply')) return;
     if (bubble.classList.contains('blurred') && !isMe) {
       Platform.haptic(20);
       update(msgRef(id), { revealed: true }).catch(() => toast('تعذّر كشف الرسالة'));
       return;
     }
-    if (e.target.closest('a, button')) return;
+    if (e.target.closest('img, a, button')) return;
     if (!bubble.querySelector('.msg-actions') || bubble.classList.contains('editing')) return;
     const open = bubble.classList.contains('show-actions');
     closeAllActions();
@@ -661,6 +908,11 @@ function renderMessage(msg, id, opts) {
   if (existing && existing.dataset.editing) { existing._pending = { msg, id }; return; }
   if (existing && existing.dataset.removing) return;
   const row = buildRow(msg, id, { noAnim: !!existing || opts.animate === false });
+  /* لا نقطع تشغيل صوت جارٍ عند تحديث الرسالة (وصلت/شوهدت...) */
+  if (existing && msg.type === 'audio') {
+    const oldAud = existing.querySelector('.aud'), newAud = row.querySelector('.aud');
+    if (oldAud && newAud) newAud.replaceWith(oldAud);
+  }
   S.rows.set(id, row);
   if (existing) existing.replaceWith(row); else placeRow(id, row);
 }
@@ -825,6 +1077,7 @@ async function deleteOwnMessage(msg, id, row) {
   if (bubble) bubble.classList.remove('show-actions');
   try {
     await remove(msgRef(id));
+    if (msg.mediaKey && RE_KEY.test(msg.mediaKey)) remove(ref(db, `media/${S.chatId}/${msg.mediaKey}`)).catch(() => {});
   } catch (err) {
     console.error(err); toast('تعذّر حذف الرسالة');
   }
@@ -894,7 +1147,8 @@ function attachSwipeToReply(bubble, msg, id) {
 }
 function setReply(msg, id) {
   const hidden = msg.blur && !msg.revealed;
-  const txt = hidden ? '🌫️ رسالة مغبشة' : (msg.text || '📎 مرفق');
+  const txt = hidden ? '🌫️ رسالة مغبشة'
+    : (msg.text || (msg.type === 'image' ? '📷 صورة' : msg.type === 'audio' ? '🎵 تسجيل صوتي' : '📄 ' + (msg.fileName || 'ملف')));
   S.replyTo = { id, name: displayName(msg.from).slice(0, 30), text: String(txt).slice(0, 140) };
   $('#rp-name').textContent = S.replyTo.name;
   $('#rp-text').textContent = S.replyTo.text;
@@ -926,15 +1180,15 @@ async function toggleReaction(emo) {
 /* ============================================================
    11) الإرسال
    ============================================================ */
-function sendMessage(extra) {
+function sendMessage(extra, force) {
   if (!S.other) { toast('اختر محادثة أولاً'); return false; }
   const now = Date.now();
-  if (now - S.lastSend < 300) return false;                 // حماية بسيطة من الضغط المتكرر (الحد الحقيقي في المرحلة هـ)
+  if (!force && now - S.lastSend < 300) return false;                 // حماية بسيطة من الضغط المتكرر (الحد الحقيقي في المرحلة هـ)
   S.lastSend = now;
   const msg = { from: me, to: S.other, type: 'text', ts: serverTimestamp(), ...extra };
   const r = push(S.msgsRef);
-  set(r, msg).then(() => Platform.haptic(12)).catch(e => { console.error(e); toast('⛔ تعذّر إرسال الرسالة'); });
-  return true;
+  return set(r, msg).then(() => { Platform.haptic(12); return true; })
+    .catch(e => { console.error(e); toast('⛔ تعذّر إرسال الرسالة'); return false; });
 }
 function sendTextMessage() {
   const input = $('#msg-input');
@@ -943,12 +1197,222 @@ function sendTextMessage() {
   const extra = { text: text.slice(0, MAX_TEXT) };
   if (S.textColor) extra.color = S.textColor;
   if (S.pendingBlur) { extra.blur = true; extra.revealed = false; }
+  if (text === '.تحميل' && S.replyTo) {
+    const m = S.msgs.get(S.replyTo.id);
+    if (m && m.type && m.type !== 'text') downloadMsg(m, S.replyTo.id); else toast('الرسالة المرتبطة ليست ملفاً');
+    input.value = ''; clearReply(); return;
+  }
   if (S.replyTo) extra.replyTo = { ...S.replyTo };
   if (!sendMessage(extra)) return;
   input.value = ''; input.style.height = 'auto';
   clearReply();
   S.pendingBlur = false; input.classList.remove('blur-armed');
   measureBars();
+}
+
+
+/* ============================================================
+   11-ب) إرسال الوسائط: صورة / صوت / ملف  (تُحفظ في media/ داخل قاعدة البيانات
+         لأن Storage غير مفعّل — عند تفعيله تتغير دالة uploadMedia فقط)
+   ============================================================ */
+function addPending(label, previewUrl) {
+  const row = document.createElement('div');
+  row.className = 'msg-row me pending no-anim';
+  row.innerHTML = `<div class="msg-bubble"><div class="pend-box">
+      ${previewUrl ? '<img class="pend-img" alt="">' : ''}
+      <div class="pend-txt"><span class="pend-spin"></span><span class="pend-label"></span></div>
+      <div class="pend-bar"><i></i></div></div></div>`;
+  row.querySelector('.pend-label').textContent = label;
+  if (previewUrl) row.querySelector('.pend-img').src = previewUrl;
+  messagesEl().appendChild(row);
+  scrollToBottom();
+  const bar = row.querySelector('.pend-bar i');
+  return {
+    set(p) { bar.style.width = Math.round(p * 100) + '%'; },
+    remove() { row.remove(); if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl); },
+    fail(t) {
+      row.querySelector('.pend-label').textContent = t;
+      row.classList.add('failed');
+      setTimeout(() => row.remove(), 3000);
+    }
+  };
+}
+/* رفع الوسيط  ← عند تفعيل Storage تُستبدل هذه الدالة فقط */
+async function uploadMedia(dataUrl) {
+  if (dataUrl.length > MAX_DATA_CHARS) throw new Error('big');
+  const key = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  await set(ref(db, `media/${S.chatId}/${key}`), { d: dataUrl, u: me });
+  return key;
+}
+async function sendMedia(kind, file, label, extra0) {
+  if (!S.other) return;
+  const tok = S.token, reply = S.replyTo;
+  if (file.size > MAX_FILE_BYTES && kind !== 'image') { toast('⛔ الملف كبير جداً (الحد 1.5 ميغابايت)'); return; }
+  const pend = addPending(label, kind === 'image' ? URL.createObjectURL(file) : null);
+  let fake = 0.05; pend.set(fake);
+  const tick = setInterval(() => { fake = Math.min(0.9, fake + 0.04); pend.set(fake); }, 200);
+  try {
+    let blob = file; const extra = { fileName: String(file.name || '').slice(0, 100), ...(extra0 || {}) };
+    if (kind === 'image') {
+      if (!/gif/i.test(file.type)) {
+        try { const r = await Platform.compressImage(file, 1280, .78); blob = r.blob; extra.w = r.w; extra.h = r.h; } catch (e) {}
+      }
+      try { const t = await Platform.compressImage(file, 32, .5); extra.thumb = await Platform.blobToDataUrl(t.blob); } catch (e) {}
+      if (blob === file && !/^image\/(jpeg|png|webp|gif)$/.test(file.type)) throw new Error('type');
+      if (/^data:image\/jpeg/.test(extra.thumb || '') === false) delete extra.thumb;
+      extra.fileName = (extra.fileName || 'image').replace(/\.\w+$/, '') + (blob === file ? '' : '.jpg');
+    }
+    const dataUrl = await Platform.blobToDataUrl(blob);
+    if (tok !== S.token) throw new Error('closed');
+    const key = await uploadMedia(dataUrl);
+    clearInterval(tick); pend.remove();
+    const ok = await sendMessage({ type: kind, mediaKey: key, ...extra, ...(reply ? { replyTo: { ...reply } } : {}) }, true);
+    if (!ok) remove(ref(db, `media/${S.chatId}/${key}`)).catch(() => {});
+    else if (S.replyTo === reply) clearReply();
+  } catch (err) {
+    clearInterval(tick);
+    console.error(err);
+    pend.fail(err && err.message === 'big' ? '⛔ الملف كبير جداً' : err && err.message === 'type' ? '⛔ نوع الصورة غير مدعوم' : '⛔ فشل الإرسال — حاول مرة أخرى');
+  }
+}
+async function pickAndSend(kind) {
+  const accept = kind === 'image' ? 'image/*' : kind === 'audio' ? 'audio/*' : '*/*';
+  const f = await Platform.pickFile(accept);
+  if (!f) return;
+  sendMedia(kind, f, kind === 'image' ? 'جار إرسال الصورة…' : kind === 'audio' ? 'جار إرسال الصوت…' : 'جار إرسال الملف…');
+}
+
+/* ============================================================
+   15) التسجيل الصوتي + المسودات (زر 🎤)
+   ============================================================ */
+const Rec = { stream: null, mr: null, chunks: [], mime: '', secs: 0, timer: null, paused: false,
+              action: 'send', prev: null, chat: null, active: false, token: 0 };
+const draftKey = () => me + '__' + S.other;
+async function refreshDraftDot() {
+  const mic = $('#btn-mic');
+  if (!S.other || !me) { mic.classList.remove('has-draft'); return; }
+  const d = await Platform.draftGet(draftKey());
+  mic.classList.toggle('has-draft', !!(d && d.blob));
+}
+function stopStream() { if (Rec.stream) { Rec.stream.getTracks().forEach(t => t.stop()); Rec.stream = null; } }
+async function startRecording() {
+  if (Rec.active) { toast('التسجيل جارٍ'); return; }
+  if (!S.other) return;
+  const key = draftKey(), chat = S.other, chatId = S.chatId;
+  Rec.prev = null; let prevDur = 0;
+  const d = await Platform.draftGet(key);
+  if (d && d.blob) {
+    const cont = await askConfirm('🎙️ صوت محفوظ', 'هل تريد إكمال صوت محفوظ؟', 'نعم', 'لا');
+    if (cont) { Rec.prev = d.blob; prevDur = d.dur || 0; }
+    else { await Platform.draftDel(key); refreshDraftDot(); }
+  }
+  if (Rec.prev && prevDur >= MAX_MERGE_SECS) {
+    toast('⛔ المسودة وصلت الحد الأقصى للإكمال (60 ثانية) — سيُرسل المحفوظ كما هو');
+    sendAudioBlob(Rec.prev, prevDur, chatId, chat); await Platform.draftDel(key); refreshDraftDot(); Rec.prev = null; return;
+  }
+  try { Rec.stream = await Platform.getMic(); }
+  catch (e) { toast('⛔ لا يمكن الوصول للميكروفون — اسمح به من الإعدادات'); return; }
+  const mime = Platform.recMime();
+  try { Rec.mr = mime ? new MediaRecorder(Rec.stream, { mimeType: mime }) : new MediaRecorder(Rec.stream); }
+  catch (e) { stopStream(); toast('⛔ التسجيل غير مدعوم هنا'); return; }
+  Rec.chat = chat; Rec.chatId = chatId; Rec.chunks = []; Rec.mime = Rec.mr.mimeType || mime || 'audio/webm';
+  Rec.secs = prevDur; Rec.paused = false; Rec.action = 'send'; Rec.active = true; Rec.token = S.token;
+  Rec.limit = Rec.prev ? MAX_MERGE_SECS : MAX_REC_SECS;
+  Rec.mr.ondataavailable = e => { if (e.data && e.data.size) Rec.chunks.push(e.data); };
+  Rec.mr.onstop = onRecStop;
+  Rec.mr.start(500);                       // قطع كل نصف ثانية → المسودة لا تكون فارغة
+  $('#record-panel').classList.add('open'); $('#record-panel').classList.remove('paused');
+  $('#btn-mic').classList.add('recording');
+  $('#rec-pause').textContent = '⏸';
+  startRecTimer(); measureBars(); Platform.haptic(30);
+}
+function startRecTimer() {
+  clearInterval(Rec.timer);
+  const upd = () => { $('#rec-time').textContent = String(Math.floor(Rec.secs / 60)).padStart(2, '0') + ':' + String(Rec.secs % 60).padStart(2, '0'); };
+  upd();
+  Rec.timer = setInterval(() => {
+    if (Rec.paused) return;
+    Rec.secs++; upd();
+    if (Rec.secs >= Rec.limit) { toast('وصلت الحد الأقصى للتسجيل'); stopRecorder('send'); }
+  }, 1000);
+}
+function pauseRecording() {
+  if (!Rec.mr || !Rec.active) return;
+  try {
+    if (Rec.paused) { Rec.mr.resume(); Rec.paused = false; $('#rec-pause').textContent = '⏸'; $('#record-panel').classList.remove('paused'); }
+    else { Rec.mr.pause(); Rec.paused = true; $('#rec-pause').textContent = '▶'; $('#record-panel').classList.add('paused'); }
+    Platform.haptic(15);
+  } catch (e) {}
+}
+function stopRecorder(action) {
+  if (!Rec.active) return;
+  Rec.action = action;
+  if (Rec.mr && Rec.mr.state !== 'inactive') { try { Rec.mr.stop(); return; } catch (e) {} }
+  onRecStop();
+}
+async function onRecStop() {
+  if (!Rec.active) return;
+  const { action, chat, chatId, secs, prev } = Rec;
+  const chunks = Rec.chunks.slice(), mime = Rec.mime;
+  stopStream(); clearInterval(Rec.timer);          // نغلق اللوحة فوراً — لا ننتظر الرفع
+  Rec.active = false; Rec.mr = null; Rec.chunks = []; Rec.prev = null; Rec.paused = false;
+  $('#record-panel').classList.remove('open'); $('#btn-mic').classList.remove('recording');
+  $('#rec-time').textContent = '00:00'; measureBars();
+
+  if (action === 'cancel') { toast('تم إلغاء التسجيل'); return; }
+  let blob = new Blob(chunks, { type: mime });
+  if (!chunks.length || blob.size < 300) { toast('التسجيل فارغ'); return; }
+  if (prev) {
+    try { toast('جار دمج التسجيل...'); blob = await mergeAudio([prev, blob]); }
+    catch (e) { console.warn('[merge]', e); toast('⛔ تعذّر دمج الجزء المحفوظ'); }
+  }
+  const dk = me + '__' + chat;
+  if (action === 'draft') {
+    try { await Platform.draftSet(dk, { blob, dur: secs, t: Date.now() }); toast('تم حفظ الصوت كمسودة'); }
+    catch (e) { toast('⛔ تعذّر حفظ المسودة'); }
+    refreshDraftDot(); return;
+  }
+  await Platform.draftDel(dk); refreshDraftDot();
+  sendAudioBlob(blob, secs, chatId, chat);
+}
+async function sendAudioBlob(blob, dur, chatId, chat) {
+  if (S.other !== chat || S.chatId !== chatId) { toast('⛔ فُتحت محادثة أخرى — احفظ الصوت كمسودة أولاً'); return; }
+  if (blob.size > MAX_FILE_BYTES) { toast('⛔ التسجيل كبير جداً'); return; }
+  const t = blob.type || '';
+  const ext = t.includes('wav') ? 'wav' : t.includes('mp4') ? 'm4a' : t.includes('ogg') ? 'ogg' : 'webm';
+  const f = new File([blob], 'تسجيل صوتي.' + ext, { type: t || 'audio/webm' });
+  sendMedia('audio', f, 'جار إرسال التسجيل…', { dur: Math.min(600, Math.max(0, Math.round(dur))), fileName: 'تسجيل صوتي' });
+}
+/* دمج جزأين صوتيين (لإكمال المسودة) → WAV 11kHz أحادي */
+async function mergeAudio(blobs) {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const ctx = new AC();
+  try {
+    const bufs = [];
+    for (const b of blobs) bufs.push(await ctx.decodeAudioData(await b.arrayBuffer()));
+    const rate = 11025;
+    const total = Math.ceil(bufs.reduce((x, b) => x + b.duration, 0) * rate) + 1;
+    const off = new OfflineAudioContext(1, total, rate);
+    let t = 0;
+    bufs.forEach(b => { const src = off.createBufferSource(); src.buffer = b; src.connect(off.destination); src.start(t); t += b.duration; });
+    const out = await off.startRendering();
+    return encodeWav(out.getChannelData(0), rate);
+  } finally { try { ctx.close(); } catch (e) {} }
+}
+function encodeWav(samples, rate) {
+  const buf = new ArrayBuffer(44 + samples.length * 2);
+  const v = new DataView(buf);
+  const w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + samples.length * 2, true); w(8, 'WAVE'); w(12, 'fmt ');
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  w(36, 'data'); v.setUint32(40, samples.length * 2, true);
+  let o = 44;
+  for (let i = 0; i < samples.length; i++, o += 2) {
+    const x = Math.max(-1, Math.min(1, samples[i]));
+    v.setInt16(o, x < 0 ? x * 0x8000 : x * 0x7FFF, true);
+  }
+  return new Blob([v], { type: 'audio/wav' });
 }
 
 /* ============================================================
@@ -1018,7 +1482,7 @@ async function runSearch() {
   const found = [];
   list.slice().reverse().forEach(m => {
     if (m.blur && !m.revealed) return;                      // لا نكشف المغبشة
-    const txt = (!m.type || m.type === 'text') ? (m.text || '') : '';
+    const txt = (!m.type || m.type === 'text') ? (m.text || '') : (m.fileName || '');
     if (txt && normMap(txt).out.indexOf(q) !== -1) found.push({ m, txt });
   });
   box.innerHTML = '';
@@ -1030,8 +1494,9 @@ async function runSearch() {
     const el = document.createElement('div');
     el.className = 'search-item';
     const who = m.from === me ? 'أنت' : escapeHtml(displayName(m.from));
+    const icon = (!m.type || m.type === 'text') ? '' : (m.type === 'image' ? '📷 ' : m.type === 'audio' ? '🎵 ' : '📄 ');
     el.innerHTML = `<div class="si-head"><b>${who}</b><span>${fmtDate(m.ts)} · ${fmt12(m.ts)}</span></div>` +
-      `<div class="si-text">${highlight(txt, q)}</div>`;
+      `<div class="si-text">${icon}${highlight(txt, q)}</div>`;
     el.addEventListener('click', () => { closeSearch(); jumpTo(m._id); });
     box.appendChild(el);
   });
@@ -1206,7 +1671,12 @@ function bindUI() {
     measureBars();
   });
   $('#btn-quick').addEventListener('click', () => { if (sendMessage({ text: QUICK_MSG })) Platform.haptic([15, 40, 15]); });
-  $('#btn-mic').addEventListener('click', () => toast('🎤 الرسائل الصوتية في المرحلة ج'));
+  $('#btn-mic').addEventListener('click', startRecording);
+  $('#rec-cancel').addEventListener('click', () => stopRecorder('cancel'));
+  $('#rec-pause').addEventListener('click', pauseRecording);
+  $('#rec-draft').addEventListener('click', () => stopRecorder('draft'));
+  $('#rec-send').addEventListener('click', () => stopRecorder('send'));
+  $('#viewer-close').addEventListener('click', () => $('#viewer').classList.remove('open'));
   $('#rp-cancel').addEventListener('click', clearReply);
 
   /* لوحة (+) */
@@ -1218,7 +1688,9 @@ function bindUI() {
     e.stopPropagation();
     const opt = b.dataset.opt;
     $('#options-panel').classList.remove('open');
-    if (opt === 'studio' || opt === 'music' || opt === 'files') toast('📎 الصور والملفات في المرحلة ج');
+    if (opt === 'studio') pickAndSend('image');
+    else if (opt === 'music') pickAndSend('audio');
+    else if (opt === 'files') pickAndSend('file');
     else if (opt === 'blur') {
       S.pendingBlur = true;
       $('#msg-input').classList.add('blur-armed');
@@ -1263,13 +1735,15 @@ function bindUI() {
 }
 function closeAll() {
   closeSearch(); closeSheets();
-  ['#chat-menu', '#color-pop', '#palette-bar', '#options-panel', '#reactions-bar'].forEach(s => $(s).classList.remove('open'));
+  ['#chat-menu', '#color-pop', '#palette-bar', '#options-panel', '#reactions-bar', '#viewer'].forEach(s => $(s).classList.remove('open'));
 }
 
 /* ============================================================
    16) فتح / إغلاق المحادثة
    ============================================================ */
 function teardownChat() {
+  if (Rec.active) { try { Rec.action = 'cancel'; stopRecorder('cancel'); } catch (e) {} }
+  if (curAudio) { try { curAudio.pause(); } catch (e) {} curAudio = null; }
   S.token++;
   detachMessages();
   S.peopleUnsubs.forEach(fn => { try { fn(); } catch (e) {} });
@@ -1325,6 +1799,7 @@ async function open(uid) {
     } catch (e) { S.clearedAt = 0; }
     if (tok !== S.token) return false;
     attachMessages(null);
+    refreshDraftDot();
     return true;
   } catch (e) {
     console.error('[SLAWChat]', e);

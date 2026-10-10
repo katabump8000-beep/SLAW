@@ -61,6 +61,18 @@
     <button class="opt-btn" data-opt="color"><span class="opt-ico" id="opt-color-dot">🎨</span><span class="rainbow-word">تلوين</span></button>
   </div>
 
+  <!-- لوحة التسجيل -->
+  <div class="record-panel" id="record-panel">
+    <div class="rec-wave"><span></span><span></span><span></span><span></span><span></span></div>
+    <span class="rec-time" id="rec-time">00:00</span>
+    <div class="rec-actions">
+      <button id="rec-cancel" class="rec-btn rec-cancel" title="إلغاء">✕</button>
+      <button id="rec-pause" class="rec-btn rec-pause" title="إيقاف مؤقت">⏸</button>
+      <button id="rec-draft" class="rec-btn rec-draft" title="مسودة">⏳</button>
+      <button id="rec-send" class="rec-btn rec-send" title="إرسال">➤</button>
+    </div>
+  </div>
+
   <!-- اختيار لون الكتابة (12 لون) -->
   <div class="pop-sheet" id="color-pop">
     <div class="pop-title"><span class="rainbow-word">تلوين</span> — اختر لون كتابتك (يبقى ثابتاً)</div>
@@ -87,6 +99,13 @@
     <span data-r="🔥">🔥</span>
     <span data-r="🥰">🥰</span>
     <span data-r="😡">😡</span>
+  </div>
+
+  <!-- عارض الصور -->
+  <div class="viewer" id="viewer">
+    <button id="viewer-close" class="icon-btn">✕</button>
+    <div class="viewer-body" id="viewer-body"></div>
+    <button id="viewer-download" class="cbtn small">تحميل ⬇</button>
   </div>
 </section>
 
