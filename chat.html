@@ -1,0 +1,161 @@
+<!-- chat.html — هيكل واجهة الشات والملف التعريفي (يُحقن داخل #chat-root) -->
+<section id="screen-chat" class="active">
+
+  <!-- الهيدر -->
+  <header class="chat-header" id="chat-header">
+    <button id="btn-back" class="icon-btn" title="رجوع">←</button>
+    <div class="header-profile" id="open-profile">
+      <div class="header-avatar" id="hdr-avatar">?</div>
+      <div class="header-info">
+        <span class="hdr-name" id="hdr-name">...</span>
+        <span class="hdr-note" id="hdr-note"></span>
+        <span class="hdr-status" id="hdr-status">غير متصل</span>
+      </div>
+    </div>
+    <button id="btn-settings" class="icon-btn" title="الإعدادات">⚙️</button>
+    <button id="btn-palette" class="icon-btn" title="الألوان">🎨</button>
+    <button id="btn-more" class="icon-btn" title="المزيد">⋮</button>
+  </header>
+
+  <!-- قائمة ⋮ -->
+  <div class="chat-menu" id="chat-menu">
+    <button class="menu-item" data-act="search"><span>🔍</span> بحث في الشات</button>
+    <button class="menu-item" data-act="refresh"><span>🔄</span> تحديث الشات</button>
+    <button class="menu-item danger" data-act="clear"><span>🗑️</span> مسح الشات عندي</button>
+  </div>
+
+  <!-- شريط البحث + النتائج -->
+  <div class="search-bar" id="search-bar">
+    <div class="search-row">
+      <input id="search-input" type="search" placeholder="ابحث في الرسائل..." autocomplete="off">
+      <button id="search-close" class="icon-btn small">✕</button>
+    </div>
+    <div class="search-results" id="search-results"></div>
+  </div>
+
+  <!-- شريط الألوان (لون التصميم) -->
+  <div class="palette-bar" id="palette-bar">
+    <div class="palette-colors" id="palette-colors"></div>
+    <button id="btn-palette-close" class="icon-btn small">✕</button>
+  </div>
+
+  <!-- منطقة الرسائل -->
+  <main class="messages" id="messages"></main>
+
+  <!-- معاينة الرد -->
+  <div class="reply-preview" id="reply-preview">
+    <div class="rp-bar"></div>
+    <div class="rp-body">
+      <span class="rp-name" id="rp-name"></span>
+      <span class="rp-text" id="rp-text"></span>
+    </div>
+    <button id="rp-cancel" class="icon-btn small">✕</button>
+  </div>
+
+  <!-- لوحة الخيارات (+) -->
+  <div class="options-panel" id="options-panel">
+    <button class="opt-btn" data-opt="studio"><span class="opt-ico">🖼️</span><span>استوديو</span></button>
+    <button class="opt-btn" data-opt="music"><span class="opt-ico">🎵</span><span>موسيقى</span></button>
+    <button class="opt-btn" data-opt="files"><span class="opt-ico">📂</span><span>ملفات</span></button>
+    <button class="opt-btn" data-opt="blur"><span class="opt-ico">🌫️</span><span>مغبشة</span></button>
+    <button class="opt-btn" data-opt="color"><span class="opt-ico" id="opt-color-dot">🎨</span><span class="rainbow-word">تلوين</span></button>
+  </div>
+
+  <!-- اختيار لون الكتابة (12 لون) -->
+  <div class="pop-sheet" id="color-pop">
+    <div class="pop-title"><span class="rainbow-word">تلوين</span> — اختر لون كتابتك (يبقى ثابتاً)</div>
+    <div class="color-grid" id="color-grid"></div>
+    <button id="color-none" class="cbtn cbtn-ghost small">بدون لون</button>
+  </div>
+
+  <!-- إدخال الرسائل -->
+  <footer class="chat-input" id="chat-input">
+    <button id="btn-plus" class="icon-btn plus" title="خيارات">+</button>
+    <button id="btn-quick" class="icon-btn quick" title="رسالة سريعة">💙</button>
+    <textarea id="msg-input" rows="1" maxlength="2000" placeholder="اكتب رسالة..."></textarea>
+    <button id="btn-mic" class="icon-btn mic" title="تسجيل">🎤</button>
+    <button id="btn-send" class="icon-btn send" title="إرسال">➤</button>
+  </footer>
+
+  <!-- شريط تفاعلات الرسالة -->
+  <div class="reactions-bar" id="reactions-bar">
+    <span data-r="❤️">❤️</span>
+    <span data-r="😂">😂</span>
+    <span data-r="😮">😮</span>
+    <span data-r="😢">😢</span>
+    <span data-r="👍">👍</span>
+    <span data-r="🔥">🔥</span>
+    <span data-r="🥰">🥰</span>
+    <span data-r="😡">😡</span>
+  </div>
+</section>
+
+<div class="sheet-backdrop" id="sheet-backdrop"></div>
+
+<!-- إعدادات الشات -->
+<div class="sheet" id="settings-panel">
+  <h3 class="sheet-title">⚙️ إعدادات الشات</h3>
+
+  <label for="set-note">ملاحظة تظهر تحت اسمك (تظهر كاسم هاتفك)</label>
+  <input id="set-note" maxlength="60" placeholder="مثال: هاتف أحمد 📱">
+
+  <label for="set-net-mode">اتصالي الآن (يظهر في ملفك التعريفي)</label>
+  <select id="set-net-mode">
+    <option value="auto">تلقائي</option>
+    <option value="wifi">واي فاي</option>
+    <option value="cell">بيانات</option>
+  </select>
+
+  <label for="set-wifi">اسم شبكة الواي فاي</label>
+  <input id="set-wifi" maxlength="32" placeholder="اكتب اسم شبكتك مرة واحدة">
+
+  <div class="inbox-toolbar-lite" style="display:flex;gap:8px;margin-top:12px">
+    <button id="btn-models" class="pill-btn models" type="button">نماذج 📐</button>
+    <button id="btn-font" class="pill-btn font" type="button">الخط 🖋</button>
+  </div>
+
+  <button id="set-save" class="cbtn cbtn-primary small">حفظ الإعدادات</button>
+  <button id="set-close" class="cbtn cbtn-ghost small">إغلاق</button>
+</div>
+
+<!-- نماذج (مقاسات الواجهة) -->
+<div class="sheet" id="model-pop">
+  <h3 class="sheet-title">📐 نماذج الواجهة</h3>
+  <p class="sheet-sub">اختر النموذج الذي تظهر فيه الأزرار بشكل صحيح على جهازك</p>
+  <div class="model-grid" id="model-grid"></div>
+  <button id="model-close" class="cbtn cbtn-ghost small">إغلاق</button>
+</div>
+
+<!-- الخط -->
+<div class="sheet" id="font-pop">
+  <h3 class="sheet-title">🖋 حجم الخط</h3>
+  <div class="size-row" id="font-steps"></div>
+  <div class="size-label" id="font-label"></div>
+  <div class="size-preview" id="font-preview">هكذا سيظهر نص الرسائل 💙</div>
+  <button id="font-close" class="cbtn cbtn-ghost small">إغلاق</button>
+</div>
+
+<!-- الملف التعريفي -->
+<div class="sheet" id="profile-modal">
+  <div class="pm-head">
+    <div class="pm-avatar" id="pm-avatar">?</div>
+    <div class="pm-name" id="pm-name">—</div>
+    <div class="pm-note" id="pm-note"></div>
+  </div>
+  <div class="pm-rows" id="pm-rows"></div>
+  <button id="pm-close" class="cbtn cbtn-ghost small">إغلاق</button>
+</div>
+
+<!-- نافذة التأكيد -->
+<div class="confirm-modal" id="confirm-modal">
+  <div class="cm-box">
+    <h3 id="cm-title"></h3>
+    <p id="cm-text"></p>
+    <div class="cm-btns">
+      <button id="cm-cancel" class="cbtn cbtn-ghost small">إلغاء</button>
+      <button id="cm-ok" class="cbtn cbtn-primary small">تأكيد</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>

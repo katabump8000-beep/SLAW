@@ -1,0 +1,189 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      "$uid": {
+        ".read": "auth.uid===$uid",
+        ".write": "auth.uid===$uid&&auth.token.email_verified===true"
+      }
+    },
+    "profiles": {
+      "$uid": {
+        ".read": "auth!=null",
+        ".write": "auth.uid===$uid&&auth.token.email_verified===true",
+        "name": {
+          ".validate": "newData.isString()&&newData.val().length>=2&&newData.val().length<=30"
+        },
+        "id": {
+          ".validate": "newData.isString()&&newData.val().matches(/^[a-z0-9_]{4,20}$/)"
+        },
+        "photo": {
+          ".validate": "newData.isString()&&(newData.val()==''||newData.val().beginsWith('data:image/jpeg;base64,'))&&newData.val().length<70000"
+        }
+      }
+    },
+    "userIds": {
+      "$id": {
+        ".read": "auth!=null",
+        ".write": "auth!=null&&auth.token.email_verified===true&&((!data.exists()&&newData.val()===auth.uid)||(data.val()===auth.uid&&!newData.exists()))"
+      }
+    },
+    "requests": {
+      "$to": {
+        ".read": "auth.uid===$to",
+        "$from": {
+          ".read": "auth.uid===$to||auth.uid===$from",
+          ".write": "auth.token.email_verified===true&&((auth.uid===$from&&(!newData.exists()||(newData.hasChild('ts')&&!root.child('blocks/'+$to+'/'+$from).exists())))||(auth.uid===$to&&!newData.exists()))"
+        }
+      }
+    },
+    "friends": {
+      "$a": {
+        ".read": "auth.uid===$a",
+        "$b": {
+          ".write": "auth.token.email_verified===true&&(auth.uid===$a||(auth.uid===$b&&root.child('requests/'+$b+'/'+$a).exists()))"
+        }
+      }
+    },
+    "blocks": {
+      "$a": {
+        ".read": "auth.uid===$a",
+        ".write": "auth.uid===$a&&auth.token.email_verified===true"
+      }
+    },
+    "chats": {
+      "$chatId": {
+        ".read": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))",
+        "cleared": {
+          "$u": {
+            ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&auth.uid===$u",
+            ".validate": "newData.isNumber()"
+          }
+        },
+        "messages": {
+          "$mid": {
+            ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&((!data.exists()&&newData.child('from').val()===auth.uid&&root.child('friends/'+auth.uid+'/'+$chatId.replace(auth.uid,'').replace('_','')).exists()&&!root.child('blocks/'+$chatId.replace(auth.uid,'').replace('_','')+'/'+auth.uid).exists()&&!root.child('blocks/'+auth.uid+'/'+$chatId.replace(auth.uid,'').replace('_','')).exists())||(data.exists()&&!newData.exists()&&data.child('from').val()===auth.uid))",
+            ".validate": "newData.hasChildren(['from','to','type','text','ts'])&&((newData.child('from').val()===auth.uid&&newData.child('to').val()==$chatId.replace(auth.uid,'').replace('_',''))||(newData.child('from').val()==$chatId.replace(auth.uid,'').replace('_','')&&newData.child('to').val()===auth.uid))",
+            "from": {
+              ".validate": "newData.val()===auth.uid||newData.val()==$chatId.replace(auth.uid,'').replace('_','')"
+            },
+            "to": {
+              ".validate": "newData.val()===auth.uid||newData.val()==$chatId.replace(auth.uid,'').replace('_','')"
+            },
+            "type": {
+              ".validate": "newData.val()==='text'"
+            },
+            "text": {
+              ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&data.parent().child('from').val()===auth.uid",
+              ".validate": "newData.isString()&&newData.val().length>=1&&newData.val().length<=2000"
+            },
+            "ts": {
+              ".validate": "newData.isNumber()&&newData.val()<=now+5000"
+            },
+            "color": {
+              ".validate": "newData.isString()&&newData.val().matches(/^#[0-9a-fA-F]{6}$/)"
+            },
+            "blur": {
+              ".validate": "newData.isBoolean()"
+            },
+            "revealed": {
+              ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&data.parent().child('to').val()===auth.uid",
+              ".validate": "newData.isBoolean()"
+            },
+            "edited": {
+              ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&data.parent().child('from').val()===auth.uid",
+              ".validate": "newData.isBoolean()"
+            },
+            "editedAt": {
+              ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&data.parent().child('from').val()===auth.uid",
+              ".validate": "newData.isNumber()"
+            },
+            "delivered": {
+              ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&data.parent().child('to').val()===auth.uid",
+              ".validate": "newData.val()===true"
+            },
+            "deliveredAt": {
+              ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&data.parent().child('to').val()===auth.uid",
+              ".validate": "newData.isNumber()"
+            },
+            "seen": {
+              ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&data.parent().child('to').val()===auth.uid",
+              ".validate": "newData.val()===true"
+            },
+            "seenAt": {
+              ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&data.parent().child('to').val()===auth.uid",
+              ".validate": "newData.isNumber()"
+            },
+            "replyTo": {
+              ".validate": "newData.hasChildren(['id','name','text'])",
+              "id": {
+                ".validate": "newData.isString()&&newData.val().length<=40"
+              },
+              "name": {
+                ".validate": "newData.isString()&&newData.val().length<=30"
+              },
+              "text": {
+                ".validate": "newData.isString()&&newData.val().length<=140"
+              },
+              "$o": {
+                ".validate": false
+              }
+            },
+            "reactions": {
+              "$emo": {
+                ".validate": "$emo.length<=16",
+                "$u": {
+                  ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&auth.uid===$u",
+                  ".validate": "newData.val()===true"
+                }
+              }
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    },
+    "status": {
+      "$uid": {
+        ".read": "auth!=null&&(auth.uid===$uid||root.child('friends/'+$uid+'/'+auth.uid).exists())",
+        ".write": "auth.uid===$uid&&auth.token.email_verified===true",
+        "online": {
+          ".validate": "newData.isBoolean()"
+        },
+        "lastSeen": {
+          ".validate": "newData.isNumber()"
+        },
+        "note": {
+          ".validate": "newData.isString()&&newData.val().length<=60"
+        },
+        "conn": {
+          ".validate": "newData.isString()&&newData.val().matches(/^(wifi|cell|none|unk)$/)"
+        },
+        "wifi": {
+          ".validate": "newData.isString()&&newData.val().length<=32"
+        },
+        "eff": {
+          ".validate": "newData.isString()&&newData.val().length<=8"
+        },
+        "dl": {
+          ".validate": "newData.isNumber()"
+        },
+        "rtt": {
+          ".validate": "newData.isNumber()"
+        },
+        "bat": {
+          ".validate": "newData.isNumber()&&newData.val()>=0&&newData.val()<=100"
+        },
+        "chg": {
+          ".validate": "newData.isBoolean()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    }
+  }
+}
