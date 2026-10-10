@@ -37,35 +37,15 @@ input:focus{border-color:var(--b)}
 </head>
 <body>
 
-<div class="s on" id="login">
-<h1>SLAW</h1><h2>تسجيل الدخول</h2>
-<input id="le" type="email" placeholder="البريد الإلكتروني" dir="ltr">
-<input id="lp" type="password" placeholder="كلمة السر" dir="ltr">
-<div class="err" id="lerr"></div>
-<button class="btn" onclick="doLogin()">دخول</button>
-<button class="lnk" onclick="startReset()">هل نسيت كلمة سر حسابك؟</button>
-<button class="btn g" onclick="startCreate()">إنشاء حساب</button>
+<div class="s on" id="login"><h1>SLAW</h1><h2>أهلاً بك</h2><p>سجّل دخولك بحساب Google للمتابعة</p><button class="btn" id="gb" onclick="googleLogin()" style="display:flex;align-items:center;justify-content:center;gap:10px"><span style="background:#fff;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 48 48" width="22" height="22"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg></span>المتابعة بحساب Google</button><div class="err" id="lerr"></div></div>
 
-</div>
-
-<div class="s" id="name"><h2>اسمك؟</h2><input id="nm" placeholder="اكتب اسمك" maxlength="30"><div class="err" id="nerr"></div><button class="btn" onclick="nextName()">التالي</button><button class="lnk" onclick="go('login')">رجوع</button></div>
+<div class="s" id="name"><h2>اسمك؟</h2><input id="nm" placeholder="اكتب اسمك" maxlength="30"><div class="err" id="nerr"></div><button class="btn" onclick="nextName()">التالي</button><button class="lnk" onclick="doOut()">رجوع</button></div>
 
 <div class="s" id="age"><h2>عمرك؟</h2><p>اختر تاريخ ميلادك</p>
 <div class="chips"><button class="chip a" id="cy" onclick="pick('y')">السنة</button><button class="chip" id="cm" onclick="pick('m')">الشهر</button><button class="chip" id="cd" onclick="pick('d')">اليوم</button></div>
 <div class="wheel" id="wy"></div><div class="wheel" id="wm" hidden></div>
 <input id="di" inputmode="numeric" placeholder="اليوم (1 - 31)" hidden>
-<div class="err" id="aerr"></div><button class="btn" onclick="nextAge()">التالي</button></div>
-
-<div class="s" id="mail"><h2>ضع بريدك الإلكتروني</h2><input id="em" type="email" placeholder="example@gmail.com" dir="ltr"><div class="err" id="eerr"></div><button class="btn" onclick="toPass()">التالي</button><button class="lnk" onclick="go('login')">رجوع</button></div>
-
-<div class="s" id="ver">
-<div class="gm"><svg viewBox="0 0 48 48"><path fill="#4caf50" d="M45 16.2l-5 2.75-5 4.75V40h7c1.66 0 3-1.34 3-3V16.2z"/><path fill="#1e88e5" d="M3 16.2l3.61 1.96L13 23.7V40H6c-1.66 0-3-1.34-3-3V16.2z"/><polygon fill="#e53935" points="35,11.2 24,19.45 13,11.2 12,17 13,23.7 24,31.95 35,23.7 36,17"/><path fill="#c62828" d="M3 12.3v3.9l10 7.5V11.2L9.88 8.87C7.19 6.85 3 8.77 3 12.3z"/><path fill="#fbc02d" d="M45 12.3v3.9l-10 7.5V11.2l3.12-2.33C40.81 6.85 45 8.77 45 12.3z"/></svg><span>تفقد بريدك واضغط رابط التفعيل</span></div>
-<p id="vmail"></p><div class="err" id="verr"></div><button class="btn" onclick="checkVer()">تحققت من بريدي</button>
-<button class="btn g" id="rs" onclick="resend()">إعادة إرسال الرابط</button><button class="lnk" onclick="doOut()">إلغاء</button></div>
-
-<div class="s" id="pass"><div class="lock">🔒</div><div class="stars">****</div><h2 id="pt">عيّن كلمة السر</h2>
-<div class="pw"><input id="pp" type="text" placeholder="ضع كلمة السر (8 خانات فأكثر)" dir="ltr"><button class="lnk" onclick="rnd()">كلمة عشوائية</button></div>
-<div class="err" id="perr"></div><button class="btn" onclick="savePass()">إنشاء الحساب</button></div>
+<div class="err" id="aerr"></div><button class="btn" onclick="nextAge()">إنهاء</button></div>
 
 <div class="s" id="home" style="justify-content:flex-start">
 <div class="top"><h1 style="font-size:24px">SLAW</h1><span id="hid" style="color:var(--mu);font-size:13px"></span></div>
@@ -80,7 +60,7 @@ input:focus{border-color:var(--b)}
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import{getDatabase,ref,get,set}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 const app=initializeApp({apiKey:"AIzaSyBlIyelgyQBD0jHPpKve2TOjH1OnZS5LMs",authDomain:"slaw-3a991.firebaseapp.com",databaseURL:"https://slaw-3a991-default-rtdb.europe-west1.firebasedatabase.app",projectId:"slaw-3a991",storageBucket:"slaw-3a991.firebasestorage.app",messagingSenderId:"989570314649",appId:"1:989570314649:web:cb29cd40127e93f2a0e308"});
 const auth=getAuth(app),db=getDatabase(app);
@@ -89,36 +69,28 @@ const MO=['يناير','فبراير','مارس','أبريل','مايو','يون
 const ld=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const go=id=>{document.querySelectorAll('.s').forEach(x=>x.classList.remove('on'));$(id).classList.add('on');scrollTo(0,0)};
 const toast=t=>{const e=$('toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),3200)};
-const vib=()=>{if(navigator.vibrate)navigator.vibrate(60)};
-const ok=e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-const EM={'auth/email-already-in-use':'هذا البريد مسجّل مسبقاً','auth/weak-password':'كلمة السر ضعيفة','auth/invalid-email':'البريد غير صحيح','auth/user-not-found':'البريد خطأ','auth/wrong-password':'كلمة المرور خاطئة','auth/invalid-credential':'البريد أو كلمة المرور خاطئة','auth/too-many-requests':'محاولات كثيرة، انتظر قليلاً','auth/network-request-failed':'لا يوجد اتصال بالإنترنت'};
-const em=e=>EM[e.code]||('خطأ: '+(e.code||e.message));
-function startCreate(){if(ld('slaw_dev')){$('lerr').textContent='قمت بإنشاء حساب بالفعل على هذا الجهاز.';return}$('lerr').textContent='';D={};go('name')}
-function nextName(){const n=$('nm').value.trim();if(n.length<2){$('nerr').textContent='اكتب اسمك';return}D.name=n;go('age');mkWheels()}
 function mkWheel(id,items,cb){const w=$(id);w.innerHTML=items.map(t=>'<div class="it">'+t+'</div>').join('');w.onscroll=()=>{const i=Math.max(0,Math.min(items.length-1,Math.round(w.scrollTop/40)));w.querySelectorAll('.it').forEach((e,j)=>e.classList.toggle('sel',j===i));cb(i)}}
 function mkWheels(){const ys=[];for(let y=2012;y>=1890;y--)ys.push(y);mkWheel('wy',ys,i=>{Y=ys[i];$('cy').textContent=Y});mkWheel('wm',MO,i=>{M=i+1;$('cm').textContent=MO[i]});pick('y')}
 function pick(k){$('wy').hidden=k!='y';$('wm').hidden=k!='m';$('di').hidden=k!='d';['y','m','d'].forEach(x=>$('c'+x).classList.toggle('a',x==k));if(k!='d'){const w=$(k=='y'?'wy':'wm');w.scrollTop+=1;w.scrollTop-=1;w.dispatchEvent(new Event('scroll'))}}
 $('di').oninput=function(){this.value=this.value.replace(/\D/g,'').slice(0,2);if(+this.value>31)this.value='31';$('cd').textContent=this.value||'اليوم'};
-function nextAge(){const d=+$('di').value;if(!Y||!M||d<1||d>31){$('aerr').textContent='أكمل السنة والشهر واليوم';return}D.dob=Y+'-'+M+'-'+d;go('mail')}
-function toPass(){const e=$('em').value.trim().toLowerCase();if(!ok(e)){$('eerr').textContent='البريد غير صحيح';return}D.email=e;$('pp').value='';go('pass')}
-function rnd(){const L='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',N='0123456789',A=L+N,a=new Uint32Array(14);crypto.getRandomValues(a);let p='';for(let i=0;i<12;i++)p+=A[a[i]%A.length];p+=L[a[12]%L.length]+N[a[13]%N.length];$('pp').value=p;vib();try{navigator.clipboard.writeText(p)}catch(e){}toast('تم نسخ كلمة المرور!')}
-async function savePass(){if(busy)return;const p=$('pp').value;if(p.length<8){$('perr').textContent='كلمة السر 8 خانات على الأقل';return}
-busy=true;$('perr').textContent='جاري الإنشاء...';
-try{await createUserWithEmailAndPassword(auth,D.email,p);sv('slaw_pend',{name:D.name,dob:D.dob});sv('slaw_dev',1);await sendEmailVerification(auth.currentUser);$('perr').textContent='';$('vmail').textContent=D.email;go('ver')}
-catch(e){$('perr').textContent=em(e)}busy=false}
-async function resend(){try{await sendEmailVerification(auth.currentUser);toast('أُرسل الرابط مجدداً');const b=$('rs');b.disabled=true;setTimeout(()=>b.disabled=false,30000)}catch(e){$('verr').textContent=em(e)}}
-async function checkVer(){const u=auth.currentUser;if(!u)return go('login');await u.reload();if(!u.emailVerified){$('verr').textContent='لم يتم التفعيل بعد. افتح الرابط في بريدك ثم ارجع هنا.';return}$('verr').textContent='';await u.getIdToken(true);await finish(u)}
-async function ensureProfile(u){const r=ref(db,'profiles/'+u.uid),s=await get(r);if(s.exists())return s.val();const p=ld('slaw_pend')||{name:u.email.split('@')[0],dob:''};let id=null;
-for(let i=0;i<6&&!id;i++){const c=String(Math.floor(1000000+Math.random()*9000000));try{await set(ref(db,'userIds/'+c),u.uid);id=c}catch(e){}}
-if(!id)throw new Error('تعذر إنشاء المعرّف');await set(ref(db,'users/'+u.uid),{email:u.email,dob:p.dob,createdAt:Date.now()});const prof={name:p.name,id:id,photo:'',bio:''};await set(r,prof);return prof}
-async function finish(u){try{const p=await ensureProfile(u);$('hw').textContent='أهلاً '+p.name;$('hid').textContent='المعرّف: '+p.id;go('home');if(!ld('slaw_sug')){sv('slaw_sug',1);setTimeout(()=>$('md').classList.add('on'),500)}}catch(e){$('lerr').textContent=e.message;go('login')}}
-async function doLogin(){if(busy)return;const e=$('le').value.trim().toLowerCase(),p=$('lp').value;if(!ok(e)){$('lerr').textContent='البريد غير صحيح';return}if(!p){$('lerr').textContent='اكتب كلمة السر';return}
-busy=true;$('lerr').textContent='';try{const c=await signInWithEmailAndPassword(auth,e,p);if(!c.user.emailVerified){await sendEmailVerification(c.user).catch(()=>{});$('vmail').textContent=e;go('ver')}else await finish(c.user)}catch(x){$('lerr').textContent=em(x)}busy=false}
-async function startReset(){const e=$('le').value.trim().toLowerCase();if(!ok(e)){$('lerr').textContent='اكتب بريدك في الحقل أولاً';return}
-try{await sendPasswordResetEmail(auth,e)}catch(x){if(x.code!='auth/user-not-found'){$('lerr').textContent=em(x);return}}$('lerr').textContent='';toast('إن كان البريد مسجّلاً فقد أرسلنا رابط إعادة تعيين كلمة المرور')}
+function nextName(){const n=$('nm').value.trim();if(n.length<2){$('nerr').textContent='اكتب اسمك';return}D.name=n;$('nerr').textContent='';go('age');mkWheels()}
+async function nextAge(){if(busy)return;const d=+$('di').value;if(!Y||!M||d<1||d>31){$('aerr').textContent='أكمل السنة والشهر واليوم';return}
+busy=true;$('aerr').textContent='جاري الحفظ...';const u=auth.currentUser;
+try{await mkProfile(u,{name:D.name,dob:Y+'-'+M+'-'+d});$('aerr').textContent='';await finish(u)}catch(e){$('aerr').textContent='تعذّر الحفظ: '+(e.code||e.message)}busy=false}
+async function mkProfile(u,p){let id=null;for(let i=0;i<6&&!id;i++){const c=String(Math.floor(1000000+Math.random()*9000000));try{await set(ref(db,'userIds/'+c),u.uid);id=c}catch(e){}}
+if(!id)throw new Error('تعذر إنشاء المعرّف');await set(ref(db,'users/'+u.uid),{email:u.email,dob:p.dob,createdAt:Date.now()});await set(ref(db,'profiles/'+u.uid),{name:p.name,id:id,photo:'',bio:''})}
+async function finish(u){try{const s=await get(ref(db,'profiles/'+u.uid));
+if(!s.exists()){$('nm').value=(u.displayName||'').slice(0,30);go('name');return}
+const p=s.val();$('hw').textContent='أهلاً '+p.name;$('hid').textContent='المعرّف: '+p.id;go('home');
+if(!ld('slaw_sug')){sv('slaw_sug',1);setTimeout(()=>$('md').classList.add('on'),500)}}catch(e){$('lerr').textContent='خطأ: '+(e.code||e.message);go('login')}}
+async function googleLogin(){if(busy)return;busy=true;$('lerr').textContent='';const pr=new GoogleAuthProvider();pr.setCustomParameters({prompt:'select_account'});
+try{await signInWithPopup(auth,pr)}catch(e){
+if(e.code=='auth/popup-blocked'||e.code=='auth/operation-not-supported-in-this-environment'){try{await signInWithRedirect(auth,pr)}catch(x){$('lerr').textContent='خطأ: '+(x.code||x.message)}}
+else if(e.code!='auth/popup-closed-by-user'&&e.code!='auth/cancelled-popup-request')$('lerr').textContent=e.code=='auth/unauthorized-domain'?'النطاق غير مصرّح في Firebase':e.code=='auth/network-request-failed'?'لا يوجد اتصال بالإنترنت':'خطأ: '+(e.code||e.message)}
+busy=false}
 async function doOut(){await signOut(auth).catch(()=>{});go('login')}
-onAuthStateChanged(auth,u=>{if(u&&u.emailVerified&&$('login').classList.contains('on'))finish(u)});
-Object.assign(window,{startCreate,nextName,pick,nextAge,toPass,rnd,savePass,resend,checkVer,doLogin,startReset,doOut,go,close_:()=>$('md').classList.remove('on'),toast});
+onAuthStateChanged(auth,u=>{if(u&&$('login').classList.contains('on'))finish(u)});
+Object.assign(window,{nextName,pick,nextAge,googleLogin,doOut,go,close_:()=>$('md').classList.remove('on'),toast});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
