@@ -1,0 +1,11 @@
+{
+  "appId": "io.github.katabump8000_beep.twa",
+  "appName": "SLAW",
+  "webDir": "www",
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": ["google.com"]
+    }
+  }
+}

@@ -66,7 +66,7 @@ box-shadow:inset 0 0 0 2px #4a1f2f,inset 0 0 0 3px rgba(205,178,122,.75),0 3px 8
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,signInWithCredential,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import{getDatabase,ref,get,set,update,onValue}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 const app=initializeApp({apiKey:"AIzaSyBlIyelgyQBD0jHPpKve2TOjH1OnZS5LMs",authDomain:"slaw-3a991.firebaseapp.com",databaseURL:"https://slaw-3a991-default-rtdb.europe-west1.firebasedatabase.app",projectId:"slaw-3a991",storageBucket:"slaw-3a991.firebasestorage.app",messagingSenderId:"989570314649",appId:"1:989570314649:web:cb29cd40127e93f2a0e308"});
 const auth=getAuth(app),db=getDatabase(app);
@@ -97,10 +97,14 @@ async function mkProfile(u,p){let id=null;for(let i=0;i<6&&!id;i++){const c=Stri
 if(!id)throw new Error('تعذر إنشاء المعرّف');await set(ref(db,'users/'+u.uid),{email:u.email,dob:p.dob,createdAt:Date.now()});await set(ref(db,'profiles/'+u.uid),{name:p.name,id:id,photo:'',bio:''})}
 async function finish(u){try{const s=await get(ref(db,'profiles/'+u.uid));if(!s.exists()){$('nm').value=(u.displayName||'').slice(0,30);go('name');return}
 ME=Object.assign({uid:u.uid},s.val());startMain()}catch(e){$('lerr').textContent='خطأ: '+(e.code||e.message);go('login')}}
-async function googleLogin(){if(busy)return;busy=true;$('lerr').textContent='';const pr=new GoogleAuthProvider();pr.setCustomParameters({prompt:'select_account'});
+const NATIVE=!!(window.Capacitor&&typeof Capacitor.isNativePlatform=='function'&&Capacitor.isNativePlatform());
+async function nativeGoogle(){const FA=Capacitor.registerPlugin('FirebaseAuthentication');const r=await FA.signInWithGoogle({skipNativeAuth:true});const t=r&&r.credential&&r.credential.idToken;if(!t)throw new Error('no-id-token');await signInWithCredential(auth,GoogleAuthProvider.credential(t))}
+async function googleLogin(){if(busy)return;busy=true;$('lerr').textContent='';
+if(NATIVE){try{await nativeGoogle()}catch(e){const m=String((e&&(e.message||e.code))||e);if(!/cancel|dismiss|12501|16/i.test(m))$('lerr').textContent='خطأ: '+m.slice(0,120)}busy=false;return}
+const pr=new GoogleAuthProvider();pr.setCustomParameters({prompt:'select_account'});
 try{await signInWithPopup(auth,pr)}catch(e){if(e.code=='auth/popup-blocked'||e.code=='auth/operation-not-supported-in-this-environment'){try{await signInWithRedirect(auth,pr)}catch(x){$('lerr').textContent='خطأ: '+(x.code||x.message)}}
 else if(e.code!='auth/popup-closed-by-user'&&e.code!='auth/cancelled-popup-request')$('lerr').textContent=e.code=='auth/network-request-failed'?'لا يوجد اتصال بالإنترنت':'خطأ: '+(e.code||e.message)}busy=false}
-async function doOut(){offs.forEach(f=>f());offs=[];ME=null;await signOut(auth).catch(()=>{});go('login')}
+async function doOut(){offs.forEach(f=>f());offs=[];ME=null;await signOut(auth).catch(()=>{});if(NATIVE){try{await Capacitor.registerPlugin('FirebaseAuthentication').signOut()}catch(e){}}go('login')}
 /* الواجهة الرئيسية */
 async function prof(uid){if(PC[uid])return PC[uid];const s=await get(ref(db,'profiles/'+uid));return PC[uid]=s.val()||{name:'مستخدم',id:'',photo:''}}
 function startMain(){offs.forEach(f=>f());offs=[];PC[ME.uid]=ME;drawMe();
@@ -146,8 +150,8 @@ async function rej(u){try{await set(ref(db,'requests/'+ME.uid+'/'+u),null)}catch
 async function blk(u){try{await update(ref(db),{['blocks/'+ME.uid+'/'+u]:true,['requests/'+ME.uid+'/'+u]:null});toast('تم الحظر')}catch(e){toast('تعذّر الحظر')}}
 onAuthStateChanged(auth,u=>{if(u){const c=document.querySelector('.s.on').id;if(c=='splash'||c=='login')finish(u)}else go('login')});
 Object.assign(window,{openChat,googleLogin,nextName,nextAge,pick,doOut,tab,openNf,closeNf,openFm,closeFm,search,sendReq,cancelReq,acc,rej,blk,saveName,saveId,pickPhoto,sug,close_,toast});
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+if(!NATIVE&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
-<script type="module" src="chat.js?v=3&fab=0"></script>
+<script type="module" src="chat.js?v=5&fab=0"></script>
 </body>
 </html>

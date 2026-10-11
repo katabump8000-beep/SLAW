@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "989570314649",
+    "firebase_url": "https://slaw-3a991-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "slaw-3a991",
+    "storage_bucket": "slaw-3a991.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:989570314649:android:5ebe3090b8b61f8ba0e308",
+        "android_client_info": {
+          "package_name": "io.github.katabump8000_beep.twa"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "989570314649-0rst63n0gqceeu3vgsgl6i0430of0ldd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "io.github.katabump8000_beep.twa",
+            "certificate_hash": "be6752c4194871c944324fc072eea6026da4c99e"
+          }
+        },
+        {
+          "client_id": "989570314649-2bgtfoh5clamd823brjt3osameqrv9v1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_SJU4fTmIHVql4hMyipTj3N_wn_22XhE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "989570314649-2bgtfoh5clamd823brjt3osameqrv9v1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

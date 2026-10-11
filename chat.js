@@ -47,6 +47,10 @@ const TEXT_COLORS = [
 /* ============================================================
    1) Platform — كل ما يعتمد على المتصفح (يُستبدل عند التحويل إلى Capacitor)
    ============================================================ */
+/* هل نعمل داخل تطبيق Capacitor الأصلي؟ (وليس في المتصفح) */
+const NATIVE = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform());
+const nativePlugin = name => { try { return window.Capacitor.registerPlugin(name); } catch (e) { return null; } };
+
 const Platform = {
   /* الاهتزاز  ← Capacitor: @capacitor/haptics */
   haptic(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} },
@@ -95,7 +99,17 @@ const Platform = {
     });
   },
   /* حفظ ملف على الجهاز  ← Capacitor: @capacitor/filesystem */
-  saveBlob(blob, name) {
+  async saveBlob(blob, name) {
+    if (NATIVE) {
+      /* في التطبيق الأصلي: نكتب الملف مؤقتاً ثم نفتح نافذة المشاركة/الحفظ */
+      try {
+        const data = (await this.blobToDataUrl(blob)).split(',')[1];
+        const FS = nativePlugin('Filesystem'), SH = nativePlugin('Share');
+        const r = await FS.writeFile({ path: 'slaw_' + Date.now() + '_' + name, data, directory: 'CACHE' });
+        await SH.share({ title: name, url: r.uri, dialogTitle: 'حفظ أو مشاركة الملف' });
+        return;
+      } catch (e) { console.warn('[native save]', e); }
+    }
     const obj = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = obj; a.download = name;
@@ -177,7 +191,16 @@ const Platform = {
 
   /* البطارية  ← Capacitor: @capacitor/device (Device.getBatteryInfo) */
   bat: null,
+  natBat: null,
   async initBattery(onChange) {
+    if (NATIVE) {
+      const Dev = nativePlugin('Device');
+      const poll = async () => {
+        try { const b = await Dev.getBatteryInfo(); this.natBat = { level: b.batteryLevel, charging: !!b.isCharging }; onChange(); } catch (e) {}
+      };
+      poll(); setInterval(poll, 60000);
+      return;
+    }
     try {
       if (navigator.getBattery) {
         this.bat = await navigator.getBattery();
@@ -188,7 +211,15 @@ const Platform = {
 
   /* الشبكة  ← Capacitor: @capacitor/network */
   rtt: null,
+  natNet: null,
   initNetwork(onChange) {
+    if (NATIVE) {
+      try {
+        const N = nativePlugin('Network');
+        N.getStatus().then(st => { this.natNet = st; onChange(); }).catch(() => {});
+        N.addListener('networkStatusChange', st => { this.natNet = st; onChange(); });
+      } catch (e) {}
+    }
     try { if (navigator.connection) navigator.connection.addEventListener('change', onChange); } catch (e) {}
     window.addEventListener('online', () => { this.measureRtt(); onChange(); });
     window.addEventListener('offline', onChange);
@@ -208,19 +239,24 @@ const Platform = {
     const c = navigator.connection || {};
     const p = this.netPref();
     let conn = 'unk';
-    if (!navigator.onLine) conn = 'none';
+    if (this.natNet) conn = !this.natNet.connected ? 'none' : this.natNet.connectionType === 'wifi' ? 'wifi' : this.natNet.connectionType === 'cellular' ? 'cell' : 'unk';
+    else if (!navigator.onLine) conn = 'none';
+    if (conn === 'none') { /* لا اتصال */ }
     else if (p.mode === 'wifi') conn = 'wifi';
     else if (p.mode === 'cell') conn = 'cell';
-    else if (c.type === 'wifi' || c.type === 'ethernet') conn = 'wifi';
-    else if (c.type === 'cellular') conn = 'cell';
+    else if (conn === 'unk') {
+      if (c.type === 'wifi' || c.type === 'ethernet') conn = 'wifi';
+      else if (c.type === 'cellular') conn = 'cell';
+    }
     return {
       conn,
       wifi: conn === 'wifi' ? String(p.wifi || '').slice(0, 32) : '',
       eff: String(c.effectiveType || '').slice(0, 8),
       dl: typeof c.downlink === 'number' ? c.downlink : null,
       rtt: this.rtt,
-      bat: this.bat ? Math.round(this.bat.level * 100) : null,
-      chg: this.bat ? !!this.bat.charging : null
+      bat: this.natBat && typeof this.natBat.level === 'number' && this.natBat.level >= 0 ? Math.round(this.natBat.level * 100)
+        : (this.bat ? Math.round(this.bat.level * 100) : null),
+      chg: this.natBat ? !!this.natBat.charging : (this.bat ? !!this.bat.charging : null)
     };
   }
 };
@@ -651,8 +687,8 @@ async function downloadMsg(msg, id) {
     const u = await mediaUrl(msg);
     if (!u) { toast('تعذّر تحميل الملف'); return; }
     const blob = dataUrlToBlob(u);
-    Platform.saveBlob(blob, safeFileName(msg.fileName, blob.type, msg.type));
-    toast('تم التنزيل ✔');
+    await Platform.saveBlob(blob, safeFileName(msg.fileName, blob.type, msg.type));
+    toast(NATIVE ? 'اختر مكان الحفظ ✔' : 'تم التنزيل ✔');
     /* عند تحميل الطرف الآخر → يظهر "قام بتحميلها ♻️" للطرفين */
     if (msg.from !== me && id && !msg.downloaded) {
       update(msgRef(id), { downloaded: true, downloadedAt: serverTimestamp() }).catch(() => {});
@@ -1207,6 +1243,8 @@ async function diagnose() {
   const out = [];
   try { out.push('صداقة: ' + ((await get(ref(db, 'friends/' + me + '/' + S.other))).exists() ? 'نعم' : 'لا')); }
   catch (e) { out.push('صداقة: ؟'); }
+  try { out.push('حظرتَه أنت: ' + ((await get(ref(db, 'blocks/' + me + '/' + S.other))).exists() ? 'نعم ← هذا هو السبب' : 'لا')); }
+  catch (e) { out.push('حظر: ؟'); }
   out.push('موثّق: ' + (auth.currentUser && auth.currentUser.emailVerified ? 'نعم' : 'لا'));
   try { await get(ref(db, `chats/${S.chatId}/cleared/${me}`)); out.push('قراءة الشات: نعم'); }
   catch (e) { out.push('قراءة الشات: لا'); }
