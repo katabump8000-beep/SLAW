@@ -1,1 +1,114 @@
+name: Build SLAW Android
 
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Prepare web files
+        run: |
+          rm -rf www
+          mkdir www
+          cp index.html chat.js chat.css chat.html click.mp3 manifest.json icon-192.png icon-512.png www/
+
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Firebase config
+        run: cp google-services.json android/app/google-services.json
+
+      - name: Patch Android project
+        run: |
+          python3 - <<'PY'
+          import re
+          # 1) variables.gradle
+          p = 'android/variables.gradle'
+          s = open(p).read()
+          s = re.sub(r'targetSdkVersion\s*=\s*\d+', 'targetSdkVersion = 34', s)
+          s = s.replace('ext {', "ext {\n    rgcfaIncludeGoogle = true\n    androidxCredentialsVersion = '1.3.0'", 1)
+          open(p, 'w').write(s)
+          # 2) permissions
+          p = 'android/app/src/main/AndroidManifest.xml'
+          s = open(p).read()
+          perms = ''.join('    <uses-permission android:name="android.permission.%s" />\n' % n for n in
+                          ['INTERNET', 'RECORD_AUDIO', 'MODIFY_AUDIO_SETTINGS', 'VIBRATE', 'ACCESS_NETWORK_STATE'])
+          for n in ['RECORD_AUDIO', 'MODIFY_AUDIO_SETTINGS', 'VIBRATE', 'ACCESS_NETWORK_STATE']:
+              if 'android.permission.%s' % n not in s:
+                  s = s.replace('<application', '    <uses-permission android:name="android.permission.%s" />\n    <application' % n, 1)
+          open(p, 'w').write(s)
+          # 3) version
+          import os
+          run = os.environ.get('RUN_NUMBER', '1')
+          p = 'android/app/build.gradle'
+          s = open(p).read()
+          s = re.sub(r'versionCode\s+\d+', 'versionCode ' + run, s)
+          s = re.sub(r'versionName\s+"[^"]*"', 'versionName "1.0.' + run + '"', s)
+          open(p, 'w').write(s)
+          PY
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
+
+      - name: App icon
+        continue-on-error: true
+        run: |
+          mkdir -p assets
+          convert icon-512.png -resize 1024x1024 assets/icon-only.png
+          npx --yes @capacitor/assets generate --android --iconBackgroundColor '#000000' --iconBackgroundColorDark '#000000'
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build release APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Sign APK
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASS: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          echo "$KEYSTORE_BASE64" | base64 -d > signing.keystore
+          UNSIGNED=$(find android/app/build/outputs/apk/release -name "*.apk" | head -1)
+          "$BT/zipalign" -p -f 4 "$UNSIGNED" aligned.apk
+          "$BT/apksigner" sign --ks signing.keystore --ks-key-alias my-key-alias \
+            --ks-pass env:KS_PASS --key-pass env:KEY_PASS --out SLAW.apk aligned.apk
+          "$BT/apksigner" verify --print-certs SLAW.apk | grep -i "SHA-1\|SHA-256"
+          rm -f signing.keystore aligned.apk
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SLAW-apk
+          path: SLAW.apk
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: SLAW build ${{ github.run_number }}
+          files: SLAW.apk
