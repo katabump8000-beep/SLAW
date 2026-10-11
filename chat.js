@@ -276,7 +276,7 @@ const isPhoto = p => typeof p === 'string' && p.startsWith('data:image/jpeg;base
    3) الحالة
    ============================================================ */
 let db = null, auth = null, me = null;
-let host = null, R = null, initPromise = null;
+let host = null, R = null, initPromise = null, fab = null, fromList = false;
 const $ = s => R.querySelector(s);
 const $$ = s => [...R.querySelectorAll(s)];
 
@@ -301,7 +301,9 @@ function ensureFirebase() {
     const app = getApp();
     db = getDatabase(app); auth = getAuth(app);
     onAuthStateChanged(auth, user => {
-      if (!user) { Presence.stop(); close(true); me = null; }
+      if (!user) { Presence.stop(); close(true); me = null; setLauncher(false); return; }
+      me = user.uid;
+      watchLauncher(user.uid);
     });
     fbReady = true;
   } catch (e) { console.warn('[SLAWChat] Firebase لم يُهيَّأ بعد', e); }
@@ -334,6 +336,10 @@ function init() {
     const st = document.createElement('style'); st.textContent = css;
     R = document.createElement('div'); R.id = 'chat-root'; R.innerHTML = html;
     sh.appendChild(st); sh.appendChild(R);
+    fab = document.createElement('button');
+    fab.id = 'chat-fab'; fab.type = 'button'; fab.title = 'المحادثات'; fab.textContent = '💬';
+    fab.addEventListener('click', () => { Platform.playClick(); showFriends(); });
+    sh.appendChild(fab);
     Platform.initClick();
     bindUI();
     buildPalette(); buildColorGrid();
@@ -1625,7 +1631,9 @@ function bindUI() {
   $('#open-profile').addEventListener('click', () => { if (S.other) openProfileSheet(S.other); });
 
   /* رجوع */
-  $('#btn-back').addEventListener('click', () => close());
+  $('#btn-back').addEventListener('click', () => { if (fromList) backToFriends(); else close(); });
+  $('#fr-back').addEventListener('click', () => close());
+  $('#fr-settings').addEventListener('click', () => { closeAll(); openSettings(); });
 
   /* الألوان */
   $('#btn-palette').addEventListener('click', e => {
@@ -1739,6 +1747,89 @@ function closeAll() {
 }
 
 /* ============================================================
+   15-ب) قائمة المحادثات (الأصدقاء) + الزر العائم 💬
+   ============================================================ */
+const FL = { unsubs: [], friends: [], blocked: new Set(), profUnsubs: new Map() };
+let launcherUnsub = null, launcherUid = null;
+function setLauncher(on) { if (fab) fab.classList.toggle('show', !!on && api.launcher !== false); }
+/* يظهر الزر فقط بعد اكتمال التسجيل (اسم + معرّف) */
+async function watchLauncher(uid) {
+  if (launcherUid === uid) return;
+  launcherUid = uid;
+  if (launcherUnsub) { try { launcherUnsub(); } catch (e) {} launcherUnsub = null; }
+  try { await init(); } catch (e) { return; }
+  launcherUnsub = onValue(ref(db, 'profiles/' + uid), snap => {
+    const v = snap.val();
+    setLauncher(!!(v && v.name && v.id) && !R.classList.contains('open'));
+  }, () => setLauncher(false));
+}
+function stopFriendsListeners() {
+  FL.unsubs.forEach(fn => { try { fn(); } catch (e) {} }); FL.unsubs = [];
+  FL.profUnsubs.forEach(fn => { try { fn(); } catch (e) {} }); FL.profUnsubs.clear();
+}
+function renderFriends() {
+  const box = $('#fr-list'); if (!box) return;
+  const list = FL.friends.filter(u => !FL.blocked.has(u))
+    .sort((a, b) => String((People[a] && People[a].name) || '').localeCompare(String((People[b] && People[b].name) || ''), 'ar'));
+  box.innerHTML = '';
+  if (!list.length) {
+    box.innerHTML = '<div class="fr-empty">لا يوجد أصدقاء بعد 👋<br>أضف صديقاً بمعرّفه من الصفحة الرئيسية،<br>وبعد قبول الطلب يظهر هنا.</div>';
+    return;
+  }
+  list.forEach(uid => {
+    const p = People[uid] || {};
+    const row = document.createElement('div');
+    row.className = 'fr-item';
+    const av = document.createElement('div'); av.className = 'fr-av'; setAvatarEl(av, uid);
+    const info = document.createElement('div');
+    const nm = document.createElement('div'); nm.className = 'fr-name'; nm.textContent = p.name || '...';
+    const idv = document.createElement('div'); idv.className = 'fr-id'; idv.textContent = p.id ? '@' + p.id : '';
+    info.appendChild(nm); info.appendChild(idv);
+    row.appendChild(av); row.appendChild(info);
+    row.addEventListener('click', () => { Platform.haptic(10); open(uid, { fromList: true }); });
+    box.appendChild(row);
+  });
+}
+async function showFriends() {
+  try {
+    if (!ensureFirebase()) return;
+    const user = auth.currentUser; if (!user) return;
+    await init();
+    me = user.uid;
+    if (S.other) { teardownChat(); clearMessagesDom(); }
+    closeAll();
+    const wasOpen = R.classList.contains('open');
+    fromList = false;
+    R.classList.add('open', 'mode-friends');
+    setLauncher(false);
+    if (!wasOpen) { try { history.pushState({ slawChat: 1 }, ''); } catch (e) {} }
+    stopFriendsListeners();
+    $('#fr-list').innerHTML = '<div class="fr-empty">⏳ جار التحميل...</div>';
+    FL.unsubs.push(onValue(ref(db, 'blocks/' + me), snap => {
+      FL.blocked = new Set(Object.keys(snap.val() || {})); renderFriends();
+    }, () => {}));
+    FL.unsubs.push(onValue(ref(db, 'friends/' + me), snap => {
+      FL.friends = Object.keys(snap.val() || {});
+      FL.friends.forEach(uid => {
+        if (FL.profUnsubs.has(uid)) return;
+        People[uid] = People[uid] || {};
+        FL.profUnsubs.set(uid, onValue(ref(db, 'profiles/' + uid), ps => {
+          const v = ps.val() || {};
+          People[uid] = { ...People[uid], name: v.name || '', id: v.id || '', photo: v.photo || '', bio: v.bio || '' };
+          renderFriends();
+        }, () => {}));
+      });
+      renderFriends();
+    }, err => { console.error(err); $('#fr-list').innerHTML = '<div class="fr-empty">⛔ تعذّر تحميل الأصدقاء</div>'; }));
+  } catch (e) { console.error('[SLAWChat]', e); }
+}
+function backToFriends() {
+  teardownChat(); clearMessagesDom(); closeAll();
+  fromList = false;
+  showFriends();
+}
+
+/* ============================================================
    16) فتح / إغلاق المحادثة
    ============================================================ */
 function teardownChat() {
@@ -1765,7 +1856,7 @@ function reloadChat() {
   toast('تم التحديث ✔');
 }
 
-async function open(uid) {
+async function open(uid, opts) {
   try {
     if (!ensureFirebase()) return false;
     const user = auth.currentUser;
@@ -1776,6 +1867,8 @@ async function open(uid) {
     if (S.other) teardownChat();
     closeAll();
 
+    fromList = !!(opts && opts.fromList);
+    stopFriendsListeners(); R.classList.remove('mode-friends'); setLauncher(false);
     S.other = uid; S.chatId = chatIdOf(me, uid);
     S.msgsRef = ref(db, `chats/${S.chatId}/messages`);
     S.token++;
@@ -1811,11 +1904,18 @@ function close(fromPop) {
   closeAll();
   teardownChat();
   clearMessagesDom();
-  R.classList.remove('open');
+  stopFriendsListeners();
+  fromList = false;
+  R.classList.remove('open', 'mode-friends');
+  if (launcherUid && fab) { get(ref(db, 'profiles/' + launcherUid)).then(sn => { const v = sn.val(); setLauncher(!!(v && v.name && v.id)); }).catch(() => {}); }
   if (!fromPop) { try { if (history.state && history.state.slawChat) history.back(); } catch (e) {} }
   if (typeof api.onBack === 'function') { try { api.onBack(); } catch (e) {} }
 }
-window.addEventListener('popstate', () => { if (R && R.classList.contains('open')) close(true); });
+window.addEventListener('popstate', () => {
+  if (!R || !R.classList.contains('open')) return;
+  if (fromList && S.other) { backToFriends(); try { history.pushState({ slawChat: 1 }, ''); } catch (e) {} return; }
+  close(true);
+});
 
 async function openProfile(uid) {
   await open(uid);
@@ -1834,8 +1934,17 @@ function startPresence() {
 api.open = open;
 api.close = () => close();
 api.openProfile = openProfile;
+api.showFriends = showFriends;
+api.launcher = true;
 api.startPresence = startPresence;
 api.stopPresence = () => Presence.stop();
 window.SLAWChat = api;
+
+/* تشغيل تلقائي: ننتظر حتى يهيّئ index.html تطبيق Firebase ثم نفعّل الزر العائم */
+(function boot() {
+  let n = 0;
+  if (ensureFirebase()) return;
+  const t = setInterval(() => { if (ensureFirebase() || ++n > 60) clearInterval(t); }, 500);
+})();
 
 window.dispatchEvent(new Event('slawchat-ready'));
