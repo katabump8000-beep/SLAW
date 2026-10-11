@@ -353,10 +353,10 @@ function init() {
    5) نوافذ + توست + تأكيد
    ============================================================ */
 let toastT = null;
-function toast(msg) {
+function toast(msg, ms) {
   const t = $('#toast'); if (!t) return;
   t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200);
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms || 2200);
 }
 function openSheet(id) { closeSheets(); $('#' + id).classList.add('open'); $('#sheet-backdrop').classList.add('open'); }
 function closeSheets() {
@@ -1194,7 +1194,23 @@ function sendMessage(extra, force) {
   const msg = { from: me, to: S.other, type: 'text', ts: serverTimestamp(), ...extra };
   const r = push(S.msgsRef);
   return set(r, msg).then(() => { Platform.haptic(12); return true; })
-    .catch(e => { console.error(e); toast('⛔ تعذّر الإرسال: ' + (e && (e.code || e.message) || 'خطأ')); return false; });
+    .catch(async e => {
+      console.error(e);
+      const code = (e && (e.code || e.message)) || 'خطأ';
+      const extra = /PERMISSION/i.test(code) ? await diagnose() : '';
+      toast('⛔ تعذّر الإرسال: ' + code + extra, 9000);
+      return false;
+    });
+}
+/* تشخيص سبب رفض الصلاحية: يُعرض مع رسالة الخطأ */
+async function diagnose() {
+  const out = [];
+  try { out.push('صداقة: ' + ((await get(ref(db, 'friends/' + me + '/' + S.other))).exists() ? 'نعم' : 'لا')); }
+  catch (e) { out.push('صداقة: ؟'); }
+  out.push('موثّق: ' + (auth.currentUser && auth.currentUser.emailVerified ? 'نعم' : 'لا'));
+  try { await get(ref(db, `chats/${S.chatId}/cleared/${me}`)); out.push('قراءة الشات: نعم'); }
+  catch (e) { out.push('قراءة الشات: لا'); }
+  return ' [' + out.join(' | ') + ']';
 }
 function sendTextMessage() {
   const input = $('#msg-input');
