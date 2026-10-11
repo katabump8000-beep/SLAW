@@ -1194,7 +1194,7 @@ function sendMessage(extra, force) {
   const msg = { from: me, to: S.other, type: 'text', ts: serverTimestamp(), ...extra };
   const r = push(S.msgsRef);
   return set(r, msg).then(() => { Platform.haptic(12); return true; })
-    .catch(e => { console.error(e); toast('⛔ تعذّر إرسال الرسالة'); return false; });
+    .catch(e => { console.error(e); toast('⛔ تعذّر الإرسال: ' + (e && (e.code || e.message) || 'خطأ')); return false; });
 }
 function sendTextMessage() {
   const input = $('#msg-input');
@@ -1247,7 +1247,7 @@ function addPending(label, previewUrl) {
 async function uploadMedia(dataUrl) {
   if (dataUrl.length > MAX_DATA_CHARS) throw new Error('big');
   const key = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-  await set(ref(db, `media/${S.chatId}/${key}`), { d: dataUrl, u: me });
+  await set(ref(db, `media/${S.chatId}/${key}`), { d: dataUrl, u: me, to: S.other });
   return key;
 }
 async function sendMedia(kind, file, label, extra0) {
@@ -1935,7 +1935,7 @@ api.open = open;
 api.close = () => close();
 api.openProfile = openProfile;
 api.showFriends = showFriends;
-api.launcher = true;
+api.launcher = new URL(import.meta.url).searchParams.get('fab') !== '0';   // ?fab=0 يلغي الزر العائم 💬
 api.startPresence = startPresence;
 api.stopPresence = () => Presence.stop();
 window.SLAWChat = api;
