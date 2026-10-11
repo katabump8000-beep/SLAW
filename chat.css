@@ -728,3 +728,27 @@
 #chat-root .sheet > *,#chat-root .pop-sheet > *{flex-shrink:0;}
 #chat-root #screen-chat{position:absolute; inset:0; z-index:5;}
 #chat-root .msg-row:has(.msg-reactions){margin-bottom:16px;}
+
+/* ===== قائمة المحادثات + زر الفتح العائم ===== */
+#chat-root #screen-friends{position:absolute; inset:0; z-index:5; display:none; flex-direction:column;
+  background:linear-gradient(180deg,var(--bg-2),var(--bg-1));}
+#chat-root.mode-friends #screen-friends{display:flex;}
+#chat-root.mode-friends #screen-chat{display:none;}
+#chat-root .fr-title{flex:1; font-weight:900; font-size:calc(18px*var(--fs,1)); padding:0 8px; color:#fff;}
+#chat-root .fr-list{flex:1; overflow-y:auto; padding:12px; -webkit-overflow-scrolling:touch;}
+#chat-root .fr-item{display:flex; align-items:center; gap:12px; padding:12px; margin-bottom:10px;
+  border:1px solid var(--bubble-other-border); border-radius:18px; background:var(--bubble-other); cursor:pointer;
+  transition:transform .15s, box-shadow .15s;}
+#chat-root .fr-item:active{transform:scale(.98); box-shadow:0 0 14px var(--edge-glow);}
+#chat-root .fr-av{width:48px; height:48px; border-radius:50%; overflow:hidden; display:flex; align-items:center;
+  justify-content:center; font-weight:900; color:#fff; font-size:20px; flex:none;}
+#chat-root .fr-av img{width:100%; height:100%; object-fit:cover;}
+#chat-root .fr-name{font-weight:700; color:#fff; font-size:calc(16px*var(--fs,1));}
+#chat-root .fr-id{opacity:.6; font-size:12px; color:#fff; direction:ltr; text-align:right; unicode-bidi:isolate;}
+#chat-root .fr-empty{text-align:center; color:#fff; opacity:.75; padding:50px 20px; line-height:1.9;}
+#chat-fab{position:fixed; z-index:8000; left:14px; bottom:calc(88px + env(safe-area-inset-bottom,0px));
+  width:56px; height:56px; border-radius:50%; border:2px solid #d4af37; background:#0b0b0b; color:#fff;
+  font-size:26px; display:none; align-items:center; justify-content:center; cursor:pointer;
+  box-shadow:0 0 18px rgba(45,255,127,.55), 0 4px 14px rgba(0,0,0,.6); font-family:inherit; padding:0;}
+#chat-fab.show{display:flex;}
+#chat-fab:active{transform:scale(.92);}
