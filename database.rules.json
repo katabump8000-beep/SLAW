@@ -63,13 +63,13 @@
         },
         "messages": {
           "$mid": {
-            ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&((!data.exists()&&newData.child('from').val()===auth.uid&&root.child('friends/'+auth.uid+'/'+$chatId.replace(auth.uid,'').replace('_','')).exists()&&!root.child('blocks/'+$chatId.replace(auth.uid,'').replace('_','')+'/'+auth.uid).exists()&&!root.child('blocks/'+auth.uid+'/'+$chatId.replace(auth.uid,'').replace('_','')).exists())||(data.exists()&&!newData.exists()&&data.child('from').val()===auth.uid))",
-            ".validate": "newData.hasChildren(['from','to','type','ts'])&&((newData.child('from').val()===auth.uid&&newData.child('to').val()==$chatId.replace(auth.uid,'').replace('_',''))||(newData.child('from').val()==$chatId.replace(auth.uid,'').replace('_','')&&newData.child('to').val()===auth.uid))&&(newData.child('type').val()!=='text'||newData.hasChild('text'))&&(newData.child('type').val()==='text'||newData.hasChild('mediaKey'))",
+            ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&((!data.exists()&&newData.child('from').val()===auth.uid&&($chatId===auth.uid+'_'+newData.child('to').val()||$chatId===newData.child('to').val()+'_'+auth.uid)&&root.child('friends/'+auth.uid+'/'+newData.child('to').val()).exists()&&!root.child('blocks/'+newData.child('to').val()+'/'+auth.uid).exists()&&!root.child('blocks/'+auth.uid+'/'+newData.child('to').val()).exists())||(data.exists()&&!newData.exists()&&data.child('from').val()===auth.uid))",
+            ".validate": "newData.hasChildren(['from','to','type','ts'])&&newData.child('from').val()!==newData.child('to').val()&&(($chatId===auth.uid+'_'+newData.child('to').val()||$chatId===newData.child('to').val()+'_'+auth.uid)||($chatId===newData.child('from').val()+'_'+newData.child('to').val()||$chatId===newData.child('to').val()+'_'+newData.child('from').val()))&&(newData.child('type').val()!=='text'||newData.hasChild('text'))&&(newData.child('type').val()==='text'||newData.hasChild('mediaKey'))",
             "from": {
-              ".validate": "newData.val()===auth.uid||newData.val()==$chatId.replace(auth.uid,'').replace('_','')"
+              ".validate": "newData.isString()&&$chatId.contains(newData.val())"
             },
             "to": {
-              ".validate": "newData.val()===auth.uid||newData.val()==$chatId.replace(auth.uid,'').replace('_','')"
+              ".validate": "newData.isString()&&$chatId.contains(newData.val())"
             },
             "type": {
               ".validate": "newData.val()==='text'||newData.val()==='image'||newData.val()==='audio'||newData.val()==='file'"
@@ -215,8 +215,8 @@
       "$chatId": {
         "$key": {
           ".read": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))",
-          ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&((!data.exists()&&newData.child('u').val()===auth.uid&&root.child('friends/'+auth.uid+'/'+$chatId.replace(auth.uid,'').replace('_','')).exists()&&!root.child('blocks/'+$chatId.replace(auth.uid,'').replace('_','')+'/'+auth.uid).exists()&&!root.child('blocks/'+auth.uid+'/'+$chatId.replace(auth.uid,'').replace('_','')).exists())||(data.exists()&&!newData.exists()&&data.child('u').val()===auth.uid))",
-          ".validate": "newData.hasChildren(['d','u'])",
+          ".write": "auth.token.email_verified===true&&($chatId.beginsWith(auth.uid+'_')||$chatId.endsWith('_'+auth.uid))&&((!data.exists()&&newData.child('u').val()===auth.uid&&($chatId===auth.uid+'_'+newData.child('to').val()||$chatId===newData.child('to').val()+'_'+auth.uid)&&root.child('friends/'+auth.uid+'/'+newData.child('to').val()).exists()&&!root.child('blocks/'+newData.child('to').val()+'/'+auth.uid).exists()&&!root.child('blocks/'+auth.uid+'/'+newData.child('to').val()).exists())||(data.exists()&&!newData.exists()&&data.child('u').val()===auth.uid))",
+          ".validate": "newData.hasChildren(['d','u','to'])",
           "d": {
             ".validate": "newData.isString()&&newData.val().beginsWith('data:')&&newData.val().length<2300000"
           },
@@ -225,6 +225,9 @@
           },
           "$other": {
             ".validate": false
+          },
+          "to": {
+            ".validate": "newData.isString()&&newData.val().length<=40"
           }
         }
       }
