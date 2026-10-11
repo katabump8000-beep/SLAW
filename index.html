@@ -110,7 +110,8 @@ tab(1);go('main');if(!ld('slaw_sug')){sv('slaw_sug',1);setTimeout(()=>$('md').cl
 function drawMe(){$('mav').innerHTML=av(ME.photo,'big');$('sn').value=ME.name;$('si').value=ME.id}
 function tab(n){$('v1').hidden=n!=1;$('v2').hidden=n!=2;$('t1').classList.toggle('on',n==1);$('t2').classList.toggle('on',n==2)}
 async function renderFr(){const l=$('lst');if(!FR.length){l.innerHTML='<p style="margin-top:40px">لا توجد محادثات بعد.<br>اضغط زر إضافة صديق في الأعلى.</p>';return}
-const ps=await Promise.all(FR.map(u=>prof(u)));l.innerHTML=ps.map(p=>'<div class="row" onclick="toast(\'المحادثة في المرحلة القادمة\')">'+av(p.photo)+'<div><b>'+esc(p.name)+'</b><span class="mu">@'+esc(p.id)+'</span></div></div>').join('')}
+const F=FR.slice(),ps=await Promise.all(F.map(u=>prof(u)));l.innerHTML=ps.map((p,i)=>'<div class="row" onclick="openChat(\''+F[i]+'\')">'+av(p.photo)+'<div><b>'+esc(p.name)+'</b><span class="mu">@'+esc(p.id)+'</span></div></div>').join('')}
+function openChat(u){if(window.SLAWChat)window.SLAWChat.open(u);else toast('جاري تحميل الشات... حاول بعد قليل')}
 function sug(n){close_();if(n==1){tab(2);pickPhoto()}else openFm()}
 const close_=()=>$('md').classList.remove('on');
 /* الإعدادات */
@@ -144,8 +145,9 @@ async function acc(u){try{await update(ref(db),{['friends/'+ME.uid+'/'+u]:true,[
 async function rej(u){try{await set(ref(db,'requests/'+ME.uid+'/'+u),null)}catch(e){toast('تعذّر الرفض')}}
 async function blk(u){try{await update(ref(db),{['blocks/'+ME.uid+'/'+u]:true,['requests/'+ME.uid+'/'+u]:null});toast('تم الحظر')}catch(e){toast('تعذّر الحظر')}}
 onAuthStateChanged(auth,u=>{if(u){const c=document.querySelector('.s.on').id;if(c=='splash'||c=='login')finish(u)}else go('login')});
-Object.assign(window,{googleLogin,nextName,nextAge,pick,doOut,tab,openNf,closeNf,openFm,closeFm,search,sendReq,cancelReq,acc,rej,blk,saveName,saveId,pickPhoto,sug,close_,toast});
+Object.assign(window,{openChat,googleLogin,nextName,nextAge,pick,doOut,tab,openNf,closeNf,openFm,closeFm,search,sendReq,cancelReq,acc,rej,blk,saveName,saveId,pickPhoto,sug,close_,toast});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
+<script type="module" src="chat.js?v=3&fab=0"></script>
 </body>
 </html>
