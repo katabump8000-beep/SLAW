@@ -49,7 +49,11 @@ const TEXT_COLORS = [
    ============================================================ */
 /* هل نعمل داخل تطبيق Capacitor الأصلي؟ (وليس في المتصفح) */
 const NATIVE = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform());
-const nativePlugin = name => { try { return window.Capacitor.registerPlugin(name); } catch (e) { return null; } };
+const nativePlugin = name => {
+  const C = window.Capacitor;
+  if (C && typeof C.registerPlugin === 'function') { try { return C.registerPlugin(name); } catch (e) {} }
+  return (C && C.Plugins && C.Plugins[name]) || null;
+};
 
 const Platform = {
   /* الاهتزاز  ← Capacitor: @capacitor/haptics */
