@@ -98,13 +98,14 @@ if(!id)throw new Error('تعذر إنشاء المعرّف');await set(ref(db,'u
 async function finish(u){try{const s=await get(ref(db,'profiles/'+u.uid));if(!s.exists()){$('nm').value=(u.displayName||'').slice(0,30);go('name');return}
 ME=Object.assign({uid:u.uid},s.val());startMain()}catch(e){$('lerr').textContent='خطأ: '+(e.code||e.message);go('login')}}
 const NATIVE=!!(window.Capacitor&&typeof Capacitor.isNativePlatform=='function'&&Capacitor.isNativePlatform());
-async function nativeGoogle(){const FA=Capacitor.registerPlugin('FirebaseAuthentication');const r=await FA.signInWithGoogle({skipNativeAuth:true});const t=r&&r.credential&&r.credential.idToken;if(!t)throw new Error('no-id-token');await signInWithCredential(auth,GoogleAuthProvider.credential(t))}
+function capPlugin(n){const C=window.Capacitor;if(C&&typeof C.registerPlugin=='function'){try{return C.registerPlugin(n)}catch(e){}}return C&&C.Plugins?C.Plugins[n]:null}
+async function nativeGoogle(){const FA=capPlugin('FirebaseAuthentication');if(!FA)throw new Error('plugin-missing');const r=await FA.signInWithGoogle({skipNativeAuth:true});const t=r&&r.credential&&r.credential.idToken;if(!t)throw new Error('no-id-token');await signInWithCredential(auth,GoogleAuthProvider.credential(t))}
 async function googleLogin(){if(busy)return;busy=true;$('lerr').textContent='';
 if(NATIVE){try{await nativeGoogle()}catch(e){const m=String((e&&(e.message||e.code))||e);if(!/cancel|dismiss|12501|16/i.test(m))$('lerr').textContent='خطأ: '+m.slice(0,120)}busy=false;return}
 const pr=new GoogleAuthProvider();pr.setCustomParameters({prompt:'select_account'});
 try{await signInWithPopup(auth,pr)}catch(e){if(e.code=='auth/popup-blocked'||e.code=='auth/operation-not-supported-in-this-environment'){try{await signInWithRedirect(auth,pr)}catch(x){$('lerr').textContent='خطأ: '+(x.code||x.message)}}
 else if(e.code!='auth/popup-closed-by-user'&&e.code!='auth/cancelled-popup-request')$('lerr').textContent=e.code=='auth/network-request-failed'?'لا يوجد اتصال بالإنترنت':'خطأ: '+(e.code||e.message)}busy=false}
-async function doOut(){offs.forEach(f=>f());offs=[];ME=null;await signOut(auth).catch(()=>{});if(NATIVE){try{await Capacitor.registerPlugin('FirebaseAuthentication').signOut()}catch(e){}}go('login')}
+async function doOut(){offs.forEach(f=>f());offs=[];ME=null;await signOut(auth).catch(()=>{});if(NATIVE){try{await capPlugin('FirebaseAuthentication').signOut()}catch(e){}}go('login')}
 /* الواجهة الرئيسية */
 async function prof(uid){if(PC[uid])return PC[uid];const s=await get(ref(db,'profiles/'+uid));return PC[uid]=s.val()||{name:'مستخدم',id:'',photo:''}}
 function startMain(){offs.forEach(f=>f());offs=[];PC[ME.uid]=ME;drawMe();
