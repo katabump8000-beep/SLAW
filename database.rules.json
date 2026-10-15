@@ -70,6 +70,10 @@
         },
         "$other": {
           ".validate": false
+        },
+        "ref": {
+          ".write": "auth.uid===$uid&&!data.exists()",
+          ".validate": "newData.isString()&&newData.val().matches(/^[0-9]{8}$/)"
         }
       }
     },
@@ -81,7 +85,8 @@
           ".validate": "newData.isNumber()&&newData.val()>=0&&newData.val()<=100000000"
         },
         "ts": {
-          ".validate": "newData.val()===now"
+          ".validate": "newData.val()===now",
+          ".write": "auth!=null&&(auth.uid===$uid||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val()))"
         },
         "$other": {
           ".validate": false
