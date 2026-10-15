@@ -78,14 +78,14 @@ const NATIVE=!!(window.Capacitor&&typeof Capacitor.isNativePlatform=='function'&
 const plug=n=>{const C=window.Capacitor;if(C&&typeof C.registerPlugin=='function'){try{return C.registerPlugin(n)}catch(e){}}return C&&C.Plugins?C.Plugins[n]:null};
 
 /* ---------- فلتر اللقب: عربي فقط، بلا زخرفة ولا تشكيل ولا تطويل ---------- */
-const NAME_RE=/^[ءؿفي ]{2,20}$/;
+const NAME_RE=/^[ء-ؿف-ي ]{2,20}$/;
 const BAD=['كلب','حمار','خرا','عاهر','شرموط','قحب','منيك','زب','كس','طيز','لعن','ابن الكلب','حقير','قذر','وسخ'];
 function nameErr(v){
   v=v.trim().replace(/\s+/g,' ');
   if(v.length<2)return'اللقب قصير جداً';
   if(!NAME_RE.test(v))return'اللقب بالعربية فقط، بدون أرقام أو زخرفة أو تشكيل';
   const flat=v.replace(/ /g,'');
-  for(const b of BAD){if(flat.includes(b.replace(/ /g,'')))return'هذا اللقب غير لائق'}
+  const ws=v.split(' ');for(const b of BAD){const k=b.replace(/ /g,'');if(k.length<=3?ws.includes(k):flat.includes(k))return'هذا اللقب غير لائق'}
   return'';
 }
 
