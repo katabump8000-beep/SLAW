@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ff4500">
+<title>FIR</title>
+<style>
+:root{--o1:#ff4500;--o2:#ff7a1a;--o3:#7a1500;--w:#fff4e8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:linear-gradient(160deg,#ff5a00,#d63200 55%,#7a1500);color:var(--w);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
+.wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 18px}
+.card{position:relative;width:100%;max-width:400px;background:rgba(60,10,0,.55);border:1px solid rgba(255,200,150,.35);border-radius:22px;padding:26px 20px;display:flex;flex-direction:column;gap:12px}
+.vol{font-size:64px;text-align:center;line-height:1}
+h1{margin:0;text-align:center;font-size:34px;letter-spacing:8px}
+.ar{text-align:center;font-size:20px;margin-top:-6px}
+label{font-size:13px;opacity:.85}
+input{width:100%;padding:13px;border-radius:12px;border:1px solid rgba(255,200,150,.45);background:rgba(0,0,0,.28);color:var(--w);font-size:17px;text-align:center;outline:none}
+input:focus{border-color:#ffd9a8}
+.btn{width:100%;padding:14px;border:0;border-radius:12px;background:linear-gradient(#ffb04a,#ff6a00);color:#3a0d00;font-size:17px;font-weight:800;cursor:pointer}
+.btn:active{filter:brightness(.9)}.btn:disabled{opacity:.55}
+.btn.g{background:rgba(0,0,0,.3);color:var(--w);border:1px solid rgba(255,200,150,.5)}
+.chips{display:flex;gap:10px}.chip{flex:1;padding:12px 4px;border-radius:12px;border:1px solid rgba(255,200,150,.45);background:rgba(0,0,0,.28);color:var(--w);font-size:16px}
+.chip.a{background:#ffb04a;color:#3a0d00;font-weight:800}
+.err{min-height:20px;text-align:center;color:#ffd0c0;font-size:14px}
+.sc{display:none;flex-direction:column;gap:12px}.sc.on{display:flex}
+.dot{position:absolute;bottom:6px;left:6px;width:14px;height:14px;border-radius:50%;background:#39ff14;box-shadow:0 0 8px #39ff14;opacity:.9}
+.mu{text-align:center;opacity:.8;font-size:14px;line-height:1.7}
+.dlg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:20px}.dlg.on{display:flex}
+.dlg>div{background:#2a0b02;border:1px solid #ffb04a;border-radius:18px;padding:22px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="card" id="card">
+ <div class="vol">🌋</div>
+ <h1>FIR</h1>
+ <div class="ar">النـ🔥ــا ر</div>
+
+ <div class="sc on" id="s0">
+  <p class="mu">مرحباً بك في المملكة</p>
+  <button class="btn" id="goLogin">تسجيل الدخول</button>
+ </div>
+
+ <div class="sc" id="s1">
+  <label>اللقب (عربي فقط وبدون زخرفة)</label>
+  <input id="nm" maxlength="20" autocomplete="off" placeholder="مثال: كاكاشي">
+  <label>الجنس</label>
+  <div class="chips"><button class="chip" data-g="m">ذكر</button><button class="chip" data-g="f">أنثى</button></div>
+  <label>من طرف مين دخلت؟ (رمز الإحالة، اختياري)</label>
+  <input id="rf" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="8 أرقام">
+  <div class="err" id="er"></div>
+  <button class="btn" id="go">تسجيل الدخول</button>
+ </div>
+
+ <div class="sc" id="s2">
+  <p class="mu" id="done">تم تسجيل الدخول</p>
+ </div>
+ <div class="dot" id="dot"></div>
+</div></div>
+
+<div class="dlg" id="dlg"><div>
+ <b style="font-size:18px">تم حل اللغز</b>
+ <p class="mu">دخول المطورين فقط</p>
+ <button class="btn" id="gg">متابعة بحساب Google</button>
+ <button class="btn g" id="cl">إغلاق</button>
+ <div class="err" id="ger"></div>
+</div></div>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import{getAuth,signInAnonymously,GoogleAuthProvider,signInWithPopup,signInWithCredential,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import{getDatabase,ref,get,set,update,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+const app=initializeApp({apiKey:"AIzaSyBlIyelgyQBD0jHPpKve2TOjH1OnZS5LMs",authDomain:"slaw-3a991.firebaseapp.com",databaseURL:"https://slaw-3a991-default-rtdb.europe-west1.firebasedatabase.app",projectId:"slaw-3a991",storageBucket:"slaw-3a991.firebasestorage.app",messagingSenderId:"989570314649",appId:"1:989570314649:web:cb29cd40127e93f2a0e308"});
+const auth=getAuth(app),db=getDatabase(app);
+const $=i=>document.getElementById(i);
+const show=n=>{for(let i=0;i<3;i++)$('s'+i).classList.toggle('on',i===n)};
+const NATIVE=!!(window.Capacitor&&typeof Capacitor.isNativePlatform=='function'&&Capacitor.isNativePlatform());
+const plug=n=>{const C=window.Capacitor;if(C&&typeof C.registerPlugin=='function'){try{return C.registerPlugin(n)}catch(e){}}return C&&C.Plugins?C.Plugins[n]:null};
+
+/* ---------- فلتر اللقب: عربي فقط، بلا زخرفة ولا تشكيل ولا تطويل ---------- */
+const NAME_RE=/^[ءؿفي ]{2,20}$/;
+const BAD=['كلب','حمار','خرا','عاهر','شرموط','قحب','منيك','زب','كس','طيز','لعن','ابن الكلب','حقير','قذر','وسخ'];
+function nameErr(v){
+  v=v.trim().replace(/\s+/g,' ');
+  if(v.length<2)return'اللقب قصير جداً';
+  if(!NAME_RE.test(v))return'اللقب بالعربية فقط، بدون أرقام أو زخرفة أو تشكيل';
+  const flat=v.replace(/ /g,'');
+  for(const b of BAD){if(flat.includes(b.replace(/ /g,'')))return'هذا اللقب غير لائق'}
+  return'';
+}
+
+/* ---------- رقم الجهاز (حساب واحد لكل جهاز) ---------- */
+async function deviceHash(){
+  let id='';
+  try{const D=plug('Device');if(D){const r=await D.getId();id=(r&&(r.identifier||r.uuid))||''}}catch(e){}
+  if(!id){id=localStorage.getItem('fir_dev')||(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+Date.now());localStorage.setItem('fir_dev',id)}
+  const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('fir|'+id));
+  return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+const rnd8=()=>String(Math.floor(Math.random()*1e8)).padStart(8,'0');
+
+/* ---------- واجهة ---------- */
+let G='';
+$('goLogin').onclick=()=>show(1);
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{G=c.dataset.g;document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('a',x===c))});
+
+/* ---------- التسجيل ---------- */
+let busy=false;
+$('go').onclick=async()=>{
+  if(busy)return;const er=$('er');er.textContent='';
+  const name=$('nm').value.trim().replace(/\s+/g,' ');
+  const e1=nameErr(name);if(e1){er.textContent=e1;return}
+  if(!G){er.textContent='اختر الجنس';return}
+  const code=$('rf').value.trim();
+  if(code&&!/^[0-9]{8}$/.test(code)){er.textContent='رمز الإحالة 8 أرقام';return}
+  busy=true;$('go').disabled=true;
+  try{
+    if(!auth.currentUser)await signInAnonymously(auth);
+    const uid=auth.currentUser.uid;
+    // هل لديه حساب أصلاً؟
+    if((await get(ref(db,'profiles/'+uid))).exists()){finish(name);return}
+    // ربط الجهاز
+    const h=await deviceHash();
+    const dv=await get(ref(db,'devices/'+h));
+    if(dv.exists()&&dv.val()!==uid){throw new Error('dup')}
+    if(!dv.exists())await set(ref(db,'devices/'+h),uid);
+    if(!(await get(ref(db,'deviceOf/'+uid))).exists())await set(ref(db,'deviceOf/'+uid),h);
+    // رمز إحالة المدعو (اختياري) — نتحقق قبل إنشاء الحساب
+    let refUid='';
+    if(code){
+      const r=await get(ref(db,'refCodes/'+code));
+      if(!r.exists()||r.val()===uid)throw new Error('badref');
+      refUid=r.val();
+    }
+    // الملف التعريفي + الرصيد الابتدائي 100
+    const myCode=rnd8();
+    await set(ref(db,'profiles/'+uid),{name,gender:G,ts:Date.now(),color:'#ff7a1a',ref:myCode});
+    await update(ref(db),{['wallets/'+uid+'/bal']:100,['wallets/'+uid+'/ts']:serverTimestamp()});
+    try{await set(ref(db,'refCodes/'+myCode),uid)}catch(e){}
+    // مكافأة الداعي +100
+    if(refUid){
+      try{
+        await set(ref(db,'refClaims/'+uid),refUid);
+        const b=(await get(ref(db,'wallets/'+refUid+'/bal'))).val();
+        if(typeof b==='number')await update(ref(db),{['refPaid/'+uid]:true,['wallets/'+refUid+'/bal']:b+100});
+      }catch(e){}
+    }
+    finish(name);
+  }catch(e){
+    const m=String(e&&(e.message||e.code)||e);
+    er.textContent=m==='dup'?'هذا الجهاز مسجّل بحساب آخر ولا يمكن إنشاء حساب ثانٍ':
+      m==='badref'?'رمز الإحالة غير صحيح':
+      /network/i.test(m)?'لا يوجد اتصال بالإنترنت':
+      /PERMISSION_DENIED|permission/i.test(m)?'تعذّر التسجيل (صلاحيات). تأكد أن قواعد قاعدة البيانات منشورة':'خطأ: '+m.slice(0,100);
+  }
+  busy=false;$('go').disabled=false;
+};
+function finish(name){show(2);$('done').textContent='أهلاً '+name+'، تم تسجيل الدخول ✅';busy=false;$('go').disabled=false}
+
+/* ---------- باب المطورين السري: النقطة الخضراء × 17 ---------- */
+let taps=0,tm=0;
+$('dot').onclick=()=>{taps++;clearTimeout(tm);tm=setTimeout(()=>taps=0,6000);if(taps>=17){taps=0;$('dlg').classList.add('on')}};
+$('cl').onclick=()=>$('dlg').classList.remove('on');
+$('gg').onclick=async()=>{
+  if(busy)return;busy=true;$('ger').textContent='';
+  try{
+    if(NATIVE){
+      const FA=plug('FirebaseAuthentication');if(!FA)throw new Error('plugin-missing');
+      const r=await FA.signInWithGoogle({skipNativeAuth:true});const t=r&&r.credential&&r.credential.idToken;if(!t)throw new Error('no-id-token');
+      await signInWithCredential(auth,GoogleAuthProvider.credential(t));
+    }else{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});await signInWithPopup(auth,p)}
+    $('dlg').classList.remove('on');
+    const uid=auth.currentUser.uid;
+    const has=(await get(ref(db,'profiles/'+uid))).exists();
+    if(has){finish('المطور')}else{show(1)}
+  }catch(e){const m=String(e&&(e.message||e.code)||e);if(!/cancel|dismiss|12501|16|closed/i.test(m))$('ger').textContent='خطأ: '+m.slice(0,100)}
+  busy=false;
+};
+</script>
+</body>
+</html>
