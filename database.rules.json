@@ -150,7 +150,7 @@
       "$gid": {
         ".read": "auth!=null&&(root.child('members/'+$gid+'/'+auth.uid).exists()||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val()))",
         "$mid": {
-          ".write": "auth!=null&&((!data.exists()&&newData.child('from').val()===auth.uid&&root.child('members/'+$gid+'/'+auth.uid).exists()&&!root.child('banned/'+auth.uid).exists()&&(!root.child('bans/'+$gid+'/'+auth.uid).exists()||root.child('bans/'+$gid+'/'+auth.uid).val()<now)&&(!root.child('groups/'+$gid+'/locked').val()||((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||root.child('groupAdmins/'+$gid+'/'+auth.uid).exists())||(newData.child('type').val()==='sys'&&(root.child('groups/'+$gid+'/kind').val()==='ads'||root.child('groups/'+$gid+'/kind').val()==='shop'||root.child('groups/'+$gid+'/kind').val()==='news'))))||(data.exists()&&!newData.exists()&&(data.child('from').val()===auth.uid||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||(root.child('groupAdmins/'+$gid+'/'+auth.uid).exists()&&!(root.child('roles/'+data.child('from').val()).val()==='dev'||data.child('from').val()===root.child('config/emperorUid').val())))))",
+          ".write": "auth!=null&&((!data.exists()&&newData.child('from').val()===auth.uid&&root.child('members/'+$gid+'/'+auth.uid).exists()&&!root.child('banned/'+auth.uid).exists()&&(!root.child('bans/'+$gid+'/'+auth.uid).exists()||root.child('bans/'+$gid+'/'+auth.uid).val()<now)&&(root.child('groups/'+$gid+'/locked').val()!==true||((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||root.child('groupAdmins/'+$gid+'/'+auth.uid).exists())||(newData.child('type').val()==='sys'&&(root.child('groups/'+$gid+'/kind').val()==='ads'||root.child('groups/'+$gid+'/kind').val()==='shop'||root.child('groups/'+$gid+'/kind').val()==='news'))))||(data.exists()&&!newData.exists()&&(data.child('from').val()===auth.uid||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||(root.child('groupAdmins/'+$gid+'/'+auth.uid).exists()&&!(root.child('roles/'+data.child('from').val()).val()==='dev'||data.child('from').val()===root.child('config/emperorUid').val())))))",
           ".validate": "newData.hasChildren(['from','type','ts'])&&(newData.child('type').val()==='sticker'||newData.child('type').val()==='image'||newData.hasChild('text'))",
           "from": {
             ".validate": "newData.isString()"
@@ -230,4 +230,4 @@
       }
     }
   }
-}
+          }
