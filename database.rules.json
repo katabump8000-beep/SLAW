@@ -15,7 +15,8 @@
     "devices": {
       "$h": {
         ".write": "auth!=null&&((!data.exists()&&newData.val()===auth.uid)||(data.exists()&&!newData.exists()&&(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())))",
-        ".validate": "newData.isString()&&$h.length>=16&&$h.length<=64"
+        ".validate": "newData.isString()&&$h.length>=16&&$h.length<=64",
+        ".read": "auth!=null"
       }
     },
     "deviceOf": {
