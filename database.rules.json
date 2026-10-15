@@ -52,7 +52,7 @@
         ".validate": "newData.hasChildren(['name','gender','ts'])",
         "name": {
           ".write": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||(data.exists()&&(root.child('wallets/'+auth.uid+'/bal').val()-newData.parent().parent().parent().child('wallets').child(auth.uid).child('bal').val()>=1000)))",
-          ".validate": "newData.isString()&&newData.val().matches(/^[ءؿفي ]{2,20}$/)"
+          ".validate": "newData.isString()&&newData.val().matches(/^[ء-ؿف-ي ]{2,20}$/)"
         },
         "gender": {
           ".validate": "newData.val()==='m'||newData.val()==='f'"
@@ -230,4 +230,4 @@
       }
     }
   }
-          }
+}
