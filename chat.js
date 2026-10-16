@@ -2,6 +2,7 @@ import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-ap
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import{getDatabase,ref,get,set,update,remove,push,query,limitToLast,endBefore,orderByKey,onValue,onChildAdded,onChildChanged,onChildRemoved,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
+import{init as initExtra}from"./extra.js";
 const app=initializeApp({apiKey:"AIzaSyBlIyelgyQBD0jHPpKve2TOjH1OnZS5LMs",authDomain:"slaw-3a991.firebaseapp.com",databaseURL:"https://slaw-3a991-default-rtdb.europe-west1.firebasedatabase.app",projectId:"slaw-3a991",storageBucket:"slaw-3a991.firebasestorage.app",messagingSenderId:"989570314649",appId:"1:989570314649:web:cb29cd40127e93f2a0e308"});
 const auth=getAuth(app),db=getDatabase(app);
 const R=p=>ref(db,p);
@@ -23,7 +24,7 @@ function compress(file,max,q,sq,type){return new Promise((res,rej)=>{const img=n
 async function fit(file,sizes,limit,sq,type){for(const s of sizes){let q=.8;do{const d=await compress(file,s,q,sq,type);if(d.length<limit)return d;q-=.12}while(q>.3)}throw new Error('big')}
 
 /* ====== الحالة ====== */
-let uid='',me={},EMP='',myRole=null,groups={},mem={},cleanup=[];
+let uid='',me={},EMP='',myRole=null,groups={},mem={},cleanup=[],ex=null,visitInfo=null;
 const isEmp=()=>uid===EMP,isDev=()=>isEmp()||myRole==='dev';
 const P=new Map(),RL=new Map(),AV=new Map();
 const prof=u=>{if(!P.has(u))P.set(u,get(R('profiles/'+u)).then(s=>s.val()||{name:'عضو',color:'#888888'}).catch(()=>({name:'عضو',color:'#888888'})));return P.get(u)};
@@ -45,6 +46,10 @@ onAuthStateChanged(auth,async u=>{
     if(ban.exists()){app$.replaceChildren(el('div',{class:'blk'},'تم حظرك من التطبيق'));return}
     me=p.val();EMP=emp.val()||'';myRole=rl.val()||null;P.set(uid,Promise.resolve(me));
     await loadGroups();
+    ex=initExtra({db,app:app$,el,toast,err,openSheet,closeSheet,go,back,avatar,prof,roleOf,copy,botAv,
+      uid:()=>uid,me:()=>me,groups:()=>groups,mem:()=>mem,isDev,isEmp,EMP:()=>EMP,
+      dropProf:u=>P.delete(u),reinfo:g=>info(g)});
+    visitInfo=await ex.checkVisit();ex.start();
     window.addEventListener('hashchange',route);route();
     document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(location.hash===''||location.hash==='#'))loadGroups().then(route)});
   }catch(e){app$.replaceChildren(el('div',{class:'blk'},'تعذر الاتصال، أغلق التطبيق وافتحه مجدداً'))}
@@ -67,6 +72,7 @@ async function loadGroups(){
 function route(){
   run();closeSheet();
   const h=location.hash.replace('#','');const[a,b]=h.split('/');
+  if(ex&&ex.route(a))return;
   if(a==='g'&&b)return chat(b);
   if(a==='i'&&b)return info(b);
   if(a==='s')return settings();
@@ -84,6 +90,7 @@ function home(){
   const ids=Object.keys(mem).filter(g=>groups[g]).sort((a,b)=>(groups[a].kind==='main'?0:1)-(groups[b].kind==='main'?0:1));
   const hasMain=ids.some(g=>groups[g].kind==='main'&&mem[g]===true);
   if(!hasMain&&!isDev())list.append(el('div',{class:'note'},'أهلاً بك 🔥\nأنت الآن في غرفة الانتظار. سيضيفك أحد المطورين إلى نقابة قريباً، أو يمكنك الدخول برمز إحالة من أحد أعضاء النقابات عند التسجيل.'));
+  if(visitInfo&&groups[visitInfo.g])list.append(el('div',{class:'note'},'✈️ أنت زائر في نقابة «'+groups[visitInfo.g].name+'» وستعود إلى نقابتك بعد '+Math.max(1,Math.ceil((visitInfo.until-Date.now())/864e5))+' يوم. رصيدك معك.'));
   if(!ids.length)list.append(el('div',{class:'empty'},'لا توجد قروبات بعد'));
   for(const g of ids){
     const gm=groups[g],ph=el('div',{class:'av'},(gm.name||'?')[0]);
@@ -92,7 +99,7 @@ function home(){
       ,mem[g]==='v'?el('span',{class:'tag'},'زائر'):null));
   }
   const hdr=el('div',{class:'hdr'},el('div',{onclick:()=>go('s')},avatar(uid)),el('h1',{},me.name),bal,
-    isEmp()?el('button',{class:'ib',onclick:()=>go('e')},'👑'):null,el('button',{class:'ib',onclick:()=>go('s')},'⚙️'));
+    el('button',{class:'ib',onclick:()=>go('shop')},'🛒'),isEmp()?el('button',{class:'ib',onclick:()=>go('e')},'👑'):null,el('button',{class:'ib',onclick:()=>go('s')},'⚙️'));
   app$.replaceChildren(hdr,list,isDev()?el('button',{class:'fab',onclick:newGroup},'+'):null);
 }
 function newGroup(){
@@ -101,7 +108,7 @@ function newGroup(){
   openSheet(el('h3',{},'إنشاء قروب'),nm,kd,el('button',{class:'btn',onclick:async()=>{
     const name=nm.value.trim();if(!name)return toast('اكتب اسم القروب');
     const g=push(R('groups')).key,kind=kd.value;
-    try{await update(ref(db),{[`groups/${g}`]:{name,kind,locked:kind!=='main',desc:'',ts:serverTimestamp(),by:uid},[`members/${g}/${uid}`]:true});
+    try{await update(ref(db),{[`groups/${g}`]:{name,kind,locked:kind!=='main',desc:'',ts:serverTimestamp(),by:uid},[`members/${g}/${uid}`]:true,...(kind==='main'?{[`guildStats/${g}`]:{atk:1,def:1}}:{})});
       groups[g]={name,kind,locked:kind!=='main',desc:''};mem[g]=true;closeSheet();go('i/'+g)}catch(e){err(e)}
   }},'إنشاء'),el('button',{class:'btn g',onclick:closeSheet},'إلغاء'));
 }
@@ -119,8 +126,12 @@ async function chat(gid){
   const box=el('div',{id:'msgs'});applyBg(box);
   const comp=el('div');
   const title=el('h1',{onclick:()=>go('i/'+gid)},gm.name);
+  const wbox=el('div');
   app$.replaceChildren(el('div',{class:'hdr'},el('button',{class:'ib',onclick:back},'→'),title,
-    el('button',{class:'ib',onclick:()=>go('i/'+gid)},'ℹ️')),box,comp);
+    gm.kind==='shop'?el('button',{class:'ib',onclick:()=>go('shop')},'🛒'):null,
+    gm.kind==='main'?el('button',{class:'ib',onclick:()=>ex.gamesSheet(gid)},'🎮'):null,
+    el('button',{class:'ib',onclick:()=>go('i/'+gid)},'ℹ️')),wbox,box,comp);
+  ex.warBanner(gid,wbox,cleanup);
 
   const els=new Map(),data=new Map(),pending=new Set();let oldest=null,sendT=0;
   const near=()=>box.scrollHeight-box.scrollTop-box.clientHeight<140;
@@ -129,10 +140,10 @@ async function chat(gid){
   cleanup.push(()=>{io.disconnect();flush()});
 
   function bubble(id,m){
-    if(m.type==='sys')return el('div',{class:'sys','data-id':id},botAv('s'),el('div',{},m.text));
+    if(m.type==='sys'){const c=ex&&ex.sysCard(m),wide=m.k==='rank'||m.k==='war';return el('div',{class:'sys'+(wide?' wide':''),'data-id':id},wide?null:botAv('s'),c||el('div',{},m.text))}
     const own=m.from===uid,c=/^#[0-9a-f]{6}$/i.test(m.color||'')?m.color:'#5b5be0';
     const bub=el('div',{class:'bub',style:`background:linear-gradient(135deg,${c},${dark(c)})`});
-    if(!own){const nm=el('div',{class:'nm'});prof(m.from).then(p=>{nm.prepend(p.name||'عضو')});roleOf(m.from).then(r=>{const t=rankTag(r,!!admins[m.from]);if(t)nm.append(t)});bub.append(nm);
+    if(!own){const nm=el('div',{class:'nm'});prof(m.from).then(p=>{nm.prepend(p.name||'عضو')});roleOf(m.from).then(r=>{const t=rankTag(r,!!admins[m.from]);if(t)nm.append(t)});if(m.vis)nm.append(el('span',{class:'tag'},'زائر'));bub.append(nm);
       const b=bios[m.from];if(b&&b.t)bub.append(el('div',{class:'bio',style:b.c?`color:${b.c}`:''},b.t))}
     if(m.type==='text')bub.append(el('div',{class:'tx'},m.text));
     else if(m.type==='image')bub.append(el('img',{class:'im',src:m.img}));
@@ -199,7 +210,7 @@ async function chat(gid){
     const ta=el('textarea',{rows:'1',placeholder:'اكتب رسالة…',maxlength:'2000'});
     ta.addEventListener('input',()=>{ta.style.height='auto';ta.style.height=Math.min(110,ta.scrollHeight)+'px'});
     const sendTxt=async()=>{const t=ta.value.trim();if(!t)return;ta.value='';ta.style.height='auto';
-      try{await set(push(R('messages/'+gid)),{from:uid,type:'text',text:t,ts:serverTimestamp(),color:me.color||'#ff7a1a'})}catch(e){err(e);ta.value=t}};
+      try{await ex.send(gid,gm,t)}catch(e){err(e);ta.value=t}};
     const stk=el('div',{class:'stp',style:'display:none'});
     const btnS=el('button',{class:'ib',onclick:async()=>{if(stk.style.display==='none'){stk.style.display='flex';await fillStickers(stk,async sid=>{stk.style.display='none';try{await set(push(R('messages/'+gid)),{from:uid,type:'sticker',sid,ts:serverTimestamp(),color:me.color||'#ff7a1a'})}catch(e){err(e)}})}else stk.style.display='none'}},'😊');
     comp.replaceChildren(stk,el('div',{class:'cmp'},btnS,ta,el('button',{class:'send',onclick:sendTxt},'➤')));
@@ -242,10 +253,12 @@ async function info(gid){
     const ta=el('textarea',{value:gm.desc||'',rows:'5',maxlength:'300'}),nm=el('input',{value:gm.name,maxlength:'40'});
     openSheet(el('h3',{},'تعديل'),nm,ta,el('button',{class:'btn',onclick:async()=>{try{await update(R('groups/'+gid),{desc:ta.value.trim(),name:nm.value.trim()||gm.name});gm.desc=ta.value.trim();gm.name=nm.value.trim()||gm.name;descEl.textContent=gm.desc||'لا يوجد وصف';nameEl.textContent=gm.name;closeSheet()}catch(e){err(e)}}},'حفظ'))}},'✏️ تعديل الاسم والوصف'))}
   body.append(dsec);
+  await ex.guildPanel(gid,gm,body);
   if(staff&&gm.kind==='main'||isDev()){
     const sec=el('div',{class:'sec'},el('h4',{},'الإعدادات'));
     if(staff){const sw=el('input',{type:'checkbox',style:'width:auto',onchange:async e=>{try{await set(R(`groups/${gid}/locked`),e.target.checked);gm.locked=e.target.checked}catch(x){err(x);e.target.checked=!e.target.checked}}});sw.checked=!!gm.locked;sec.append(el('div',{class:'sw'},el('span',{},'قفل الشات'),sw))}
     if(isDev()){const kd=el('select',{style:'margin-top:10px',onchange:async()=>{try{const k=kd.value;await update(R('groups/'+gid),{kind:k,locked:k!=='main'?true:!!gm.locked});gm.kind=k;if(k!=='main')gm.locked=true;toast('تم التغيير')}catch(e){err(e)}}},...Object.entries(KN).map(([k,v])=>el('option',{value:k},v)));kd.value=gm.kind;sec.append(el('div',{style:'margin-top:8px'},el('span',{},'نوع القروب'),kd))}
+    if(staff&&gm.kind==='main'){const pal=el('div',{class:'cols',style:'margin-top:6px'});['#2a6cff','#e53935','#8e24aa','#00897b','#f9a825','#d81b60','#43a047','#ff7a1a'].forEach(c=>pal.append(el('div',{class:'cc',style:'background:'+c,onclick:async()=>{try{await set(R(`groups/${gid}/c`),c);gm.c=c;toast('تم اختيار لون النقابة ✅')}catch(e){err(e)}}})));sec.append(el('div',{style:'margin-top:10px;color:var(--mu)'},'لون النقابة (يظهر في قوائم الحسبة)'),pal)}
     body.append(sec);
   }
   // رمز النشر الخاص بي
@@ -323,7 +336,7 @@ function settings(){
 /* ====== قائمة الإمبراطور ====== */
 async function empMenu(){
   const s=el('input',{placeholder:'ابحث بالاسم'}),list=el('div',{class:'list'});
-  app$.replaceChildren(el('div',{class:'hdr'},el('button',{class:'ib',onclick:back},'→'),el('h1',{},'👑 المستخدمون')),el('div',{style:'padding:10px'},s),list);
+  app$.replaceChildren(el('div',{class:'hdr'},el('button',{class:'ib',onclick:back},'→'),el('h1',{},'👑 المستخدمون')),ex.empExtras(),el('div',{style:'padding:10px'},s),list);
   let all={};try{all=(await get(R('profiles'))).val()||{}}catch(e){err(e);return}
   const roles={};await Promise.all(Object.keys(all).map(async u=>{roles[u]=await roleOf(u)}));
   const draw=()=>{const q=s.value.trim(),ents=Object.entries(all).filter(([k,v])=>!q||(v.name||'').includes(q));

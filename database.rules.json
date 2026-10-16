@@ -84,7 +84,143 @@
     "guildStats": {
       "$gid": {
         ".read": "auth!=null&&(root.child('members/'+$gid+'/'+auth.uid).val()===true||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val()))",
+        ".write": "auth!=null&&(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())",
+        "atk": {
+          ".write": "auth!=null&&root.child('members/'+$gid+'/'+auth.uid).val()===true&&data.exists()&&newData.val()===data.val()+1&&newData.parent().parent().parent().child('inv').child(auth.uid).child('upg').val()===root.child('inv/'+auth.uid+'/upg').val()-1",
+          ".validate": "newData.isNumber()&&newData.val()>=0&&newData.val()<=9999"
+        },
+        "def": {
+          ".write": "auth!=null&&root.child('members/'+$gid+'/'+auth.uid).val()===true&&data.exists()&&newData.val()===data.val()+1&&newData.parent().parent().parent().child('inv').child(auth.uid).child('upg').val()===root.child('inv/'+auth.uid+'/upg').val()-1",
+          ".validate": "newData.isNumber()&&newData.val()>=0&&newData.val()<=9999"
+        },
+        "contrib": {
+          "$u": {
+            ".write": "auth!=null&&auth.uid===$u&&root.child('members/'+$gid+'/'+auth.uid).val()===true&&((!data.exists()&&newData.val()===1)||(data.exists()&&newData.val()===data.val()+1))",
+            ".validate": "newData.isNumber()"
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "stats": {
+      "$gid": {
+        ".read": "auth!=null&&(root.child('members/'+$gid+'/'+auth.uid).val()===true||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val()))",
+        ".write": "auth!=null&&(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())",
+        "$uid": {
+          ".write": "auth!=null&&auth.uid===$uid&&root.child('members/'+$gid+'/'+auth.uid).exists()&&((!data.exists()&&newData.val()<=2)||(data.exists()&&newData.val()>data.val()&&newData.val()<=data.val()+2))",
+          ".validate": "newData.isNumber()"
+        }
+      }
+    },
+    "boost": {
+      ".read": "auth!=null&&(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())",
+      "$uid": {
+        ".read": "auth.uid===$uid",
+        ".write": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||(auth.uid===$uid&&!data.exists()&&newData.val()===true&&(root.child('wallets/'+auth.uid+'/bal').val()-newData.parent().parent().child('wallets').child(auth.uid).child('bal').val()>=1500)))",
+        ".validate": "newData.val()===true"
+      }
+    },
+    "inv": {
+      "$uid": {
+        ".read": "auth.uid===$uid||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())",
+        "upg": {
+          ".write": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||(auth.uid===$uid&&((!data.exists()&&newData.val()===1&&(root.child('wallets/'+auth.uid+'/bal').val()-newData.parent().parent().parent().child('wallets').child(auth.uid).child('bal').val()>=500))||(data.exists()&&newData.val()===data.val()+1&&(root.child('wallets/'+auth.uid+'/bal').val()-newData.parent().parent().parent().child('wallets').child(auth.uid).child('bal').val()>=500))||(data.exists()&&newData.val()===data.val()-1&&newData.val()>=0))))",
+          ".validate": "newData.isNumber()&&newData.val()>=0&&newData.val()<=99999"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "visit": {
+      "$uid": {
+        ".read": "auth.uid===$uid||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())",
+        ".write": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||(auth.uid===$uid&&((!data.exists()&&(root.child('wallets/'+auth.uid+'/bal').val()-newData.parent().parent().child('wallets').child(auth.uid).child('bal').val()>=10000))||(data.exists()&&!newData.exists()))))",
+        ".validate": "newData.hasChildren(['g','home','until'])",
+        "g": {
+          ".validate": "newData.isString()"
+        },
+        "home": {
+          ".validate": "newData.isString()"
+        },
+        "until": {
+          ".validate": "newData.isNumber()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "meta": {
+      ".read": "auth!=null",
+      "tallyHour": {
+        ".write": "auth!=null&&auth.uid===root.child('config/emperorUid').val()",
+        ".validate": "newData.isNumber()&&newData.val()>=0&&newData.val()<=23"
+      },
+      "$other": {
+        ".validate": false
+      }
+    },
+    "wars": {
+      ".read": "auth!=null&&(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())",
+      "$wid": {
+        ".read": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||root.child('members/'+data.child('a').val()+'/'+auth.uid).val()===true||root.child('members/'+data.child('d').val()+'/'+auth.uid).val()===true)",
+        ".write": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||(!data.exists()&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||root.child('groupAdmins/'+newData.child('a').val()+'/'+auth.uid).exists())&&newData.child('by').val()===auth.uid&&newData.child('a').val()!==newData.child('d').val()&&root.child('groups/'+newData.child('a').val()+'/kind').val()==='main'&&root.child('groups/'+newData.child('d').val()+'/kind').val()==='main'&&newData.child('s').val()==='p'&&newData.child('st').val()>=now+3000000&&newData.child('en').val()===newData.child('st').val()+300000&&(root.child('wallets/'+auth.uid+'/bal').val()-newData.parent().parent().child('wallets').child(auth.uid).child('bal').val()>=20000)&&!root.child('activeWar/'+newData.child('a').val()).exists()&&!root.child('activeWar/'+newData.child('d').val()).exists()))",
+        ".validate": "newData.hasChildren(['a','d','by','st','en','s'])",
+        "a": {
+          ".validate": "newData.isString()"
+        },
+        "d": {
+          ".validate": "newData.isString()"
+        },
+        "by": {
+          ".validate": "newData.isString()"
+        },
+        "st": {
+          ".validate": "newData.isNumber()"
+        },
+        "en": {
+          ".validate": "newData.isNumber()"
+        },
+        "t0": {
+          ".validate": "newData.isNumber()"
+        },
+        "s": {
+          ".validate": "newData.val()==='p'||newData.val()==='d'"
+        },
+        "res": {
+          ".validate": "newData.val()==='a'||newData.val()==='d'"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "activeWar": {
+      "$gid": {
+        ".read": "auth!=null&&(root.child('members/'+$gid+'/'+auth.uid).val()===true||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val()))",
+        ".write": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||(!data.exists()&&newData.isString()&&($gid===newData.parent().parent().child('wars').child(newData.val()).child('a').val()||$gid===newData.parent().parent().child('wars').child(newData.val()).child('d').val())&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||root.child('groupAdmins/'+newData.parent().parent().child('wars').child(newData.val()).child('a').val()+'/'+auth.uid).exists())))"
+      }
+    },
+    "leadWar": {
+      "$uid": {
+        ".read": "auth.uid===$uid||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())",
         ".write": "auth!=null&&(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())"
+      }
+    },
+    "warCand": {
+      "$wid": {
+        ".read": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||root.child('wars/'+$wid+'/by').val()===auth.uid)",
+        ".write": "auth!=null&&(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())"
+      }
+    },
+    "warMv": {
+      ".read": "auth!=null&&(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())",
+      "$wid": {
+        ".read": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||root.child('wars/'+$wid+'/by').val()===auth.uid)",
+        ".write": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||(!data.exists()&&root.child('wars/'+$wid+'/by').val()===auth.uid&&root.child('wars/'+$wid+'/res').val()==='a'))"
       }
     },
     "groupBios": {
@@ -149,7 +285,7 @@
         ".write": "auth!=null&&((auth.uid===$uid&&!data.exists()&&root.child('deviceOf/'+auth.uid).exists())||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val()))",
         ".validate": "newData.hasChildren(['name','gender','ts'])",
         "name": {
-          ".write": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||(data.exists()&&(root.child('wallets/'+auth.uid+'/bal').val()-newData.parent().parent().parent().child('wallets').child(auth.uid).child('bal').val()>=1000)))",
+          ".write": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||(data.exists()&&!(root.child('roles/'+$uid).val()==='dev'||$uid===root.child('config/emperorUid').val())&&(root.child('wallets/'+auth.uid+'/bal').val()-newData.parent().parent().parent().child('wallets').child(auth.uid).child('bal').val()>=1000)))",
           ".validate": "newData.isString()&&newData.val().matches(/^[ء-ؿف-ي ]{2,20}$/)"
         },
         "gender": {
@@ -171,7 +307,7 @@
       "$uid": {
         ".read": "auth.uid===$uid||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())",
         "bal": {
-          ".write": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||(auth.uid===$uid&&((!data.exists()&&newData.val()<=100)||(data.exists()&&newData.val()<=data.val())||(data.exists()&&newData.val()<=data.val()+500&&newData.parent().child('ts').val()>=data.parent().child('ts').val()+4000)))||(data.exists()&&newData.val()===data.val()+100&&!root.child('refPaid/'+auth.uid).exists()&&newData.parent().parent().parent().child('refPaid').child(auth.uid).exists()&&root.child('refCodes/'+root.child('refClaims/'+auth.uid).val()+'/u').val()===$uid))",
+          ".write": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||(auth.uid===$uid&&((!data.exists()&&newData.val()<=100)||(data.exists()&&newData.val()<=data.val())||(data.exists()&&newData.val()<=data.val()+1000&&newData.parent().child('ts').val()>=data.parent().child('ts').val()+4000)))||(data.exists()&&$uid!==auth.uid&&newData.val()>data.val()&&newData.val()-data.val()<=root.child('wallets/'+auth.uid+'/bal').val()-newData.parent().parent().parent().child('wallets').child(auth.uid).child('bal').val()&&newData.parent().parent().parent().child('wallets').child(auth.uid).child('bal').val()>=0)||(data.exists()&&newData.val()===data.val()+100&&!root.child('refPaid/'+auth.uid).exists()&&newData.parent().parent().parent().child('refPaid').child(auth.uid).exists()&&root.child('refCodes/'+root.child('refClaims/'+auth.uid).val()+'/u').val()===$uid))",
           ".validate": "newData.isNumber()&&newData.val()>=0&&newData.val()<=100000000"
         },
         "ts": {
@@ -213,6 +349,10 @@
           ".write": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||root.child('groupAdmins/'+$gid+'/'+auth.uid).exists())",
           ".validate": "newData.isBoolean()"
         },
+        "c": {
+          ".write": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||root.child('groupAdmins/'+$gid+'/'+auth.uid).exists())",
+          ".validate": "newData.isString()&&newData.val().matches(/^#[0-9a-fA-F]{6}$/)"
+        },
         "desc": {
           ".write": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||root.child('groupAdmins/'+$gid+'/'+auth.uid).exists())",
           ".validate": "newData.isString()&&newData.val().length<=300"
@@ -241,7 +381,7 @@
         ".read": "auth!=null&&(root.child('members/'+$gid+'/'+auth.uid).val()===true||((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||root.child('groupAdmins/'+$gid+'/'+auth.uid).exists()))",
         "$uid": {
           ".read": "auth.uid===$uid",
-          ".write": "auth!=null&&(((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())&&!(!newData.exists()&&$uid===root.child('config/emperorUid').val()&&auth.uid!==root.child('config/emperorUid').val()))||(auth.uid===$uid&&!data.exists()&&!root.child('banned/'+auth.uid).exists()&&root.child('groups/'+$gid).exists()&&root.child('profiles/'+auth.uid).exists()&&(root.child('groups/'+$gid+'/kind').val()!=='main'||root.child('refCodes/'+root.child('refClaims/'+auth.uid).val()+'/g').val()===$gid))||(!newData.exists()&&root.child('groupAdmins/'+$gid+'/'+auth.uid).exists()&&!(root.child('roles/'+$uid).val()==='dev'||$uid===root.child('config/emperorUid').val())))",
+          ".write": "auth!=null&&(((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())&&!(!newData.exists()&&$uid===root.child('config/emperorUid').val()&&auth.uid!==root.child('config/emperorUid').val()))||(auth.uid===$uid&&!data.exists()&&newData.val()===true&&!root.child('banned/'+auth.uid).exists()&&root.child('groups/'+$gid).exists()&&root.child('profiles/'+auth.uid).exists()&&(root.child('groups/'+$gid+'/kind').val()!=='main'||root.child('refCodes/'+root.child('refClaims/'+auth.uid).val()+'/g').val()===$gid))||(auth.uid===$uid&&!data.exists()&&newData.val()==='v'&&!root.child('banned/'+auth.uid).exists()&&root.child('groups/'+$gid+'/kind').val()==='main'&&(root.child('wallets/'+auth.uid+'/bal').val()-newData.parent().parent().parent().child('wallets').child(auth.uid).child('bal').val()>=10000))||(auth.uid===$uid&&data.val()==='v'&&!newData.exists())||(!newData.exists()&&root.child('groupAdmins/'+$gid+'/'+auth.uid).exists()&&!(root.child('roles/'+$uid).val()==='dev'||$uid===root.child('config/emperorUid').val())))",
           ".validate": "newData.val()===true||newData.val()==='v'"
         }
       }
@@ -249,8 +389,9 @@
     "messages": {
       "$gid": {
         ".read": "auth!=null&&(root.child('members/'+$gid+'/'+auth.uid).exists()||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val()))",
+        ".write": "auth!=null&&(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())&&!newData.exists()",
         "$mid": {
-          ".write": "auth!=null&&((!data.exists()&&newData.child('from').val()===auth.uid&&root.child('members/'+$gid+'/'+auth.uid).exists()&&!root.child('banned/'+auth.uid).exists()&&(!root.child('bans/'+$gid+'/'+auth.uid).exists()||root.child('bans/'+$gid+'/'+auth.uid).val()<now)&&((newData.child('type').val()==='sys'&&newData.child('k').val()==='welcome'&&root.child('groups/'+$gid+'/kind').val()==='main'&&newData.parent().parent().parent().child('welcomed').child($gid).child(auth.uid).exists()&&!root.child('welcomed/'+$gid+'/'+auth.uid).exists())||(root.child('groups/'+$gid+'/locked').val()!==true)||((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||root.child('groupAdmins/'+$gid+'/'+auth.uid).exists())||(newData.child('type').val()==='sys'&&(root.child('groups/'+$gid+'/kind').val()==='ads'||root.child('groups/'+$gid+'/kind').val()==='shop'||root.child('groups/'+$gid+'/kind').val()==='news'))))||(data.exists()&&!newData.exists()&&(data.child('from').val()===auth.uid||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||(root.child('groupAdmins/'+$gid+'/'+auth.uid).exists()&&!(root.child('roles/'+data.child('from').val()).val()==='dev'||data.child('from').val()===root.child('config/emperorUid').val())))))",
+          ".write": "auth!=null&&((!data.exists()&&newData.child('from').val()===auth.uid&&root.child('members/'+$gid+'/'+auth.uid).exists()&&!root.child('banned/'+auth.uid).exists()&&(!root.child('bans/'+$gid+'/'+auth.uid).exists()||root.child('bans/'+$gid+'/'+auth.uid).val()<now)&&(!(newData.child('type').val()==='sys')||(root.child('groups/'+$gid+'/kind').val()==='ads'||root.child('groups/'+$gid+'/kind').val()==='shop'||root.child('groups/'+$gid+'/kind').val()==='news')||(root.child('groups/'+$gid+'/kind').val()==='main'&&((newData.child('k').val()==='bot'&&newData.hasChild('f'))||(newData.child('k').val()==='visit'&&root.child('members/'+$gid+'/'+auth.uid).val()==='v')||(newData.child('type').val()==='sys'&&newData.child('k').val()==='welcome'&&root.child('groups/'+$gid+'/kind').val()==='main'&&newData.parent().parent().parent().child('welcomed').child($gid).child(auth.uid).exists()&&!root.child('welcomed/'+$gid+'/'+auth.uid).exists()))))&&((newData.child('type').val()==='sys'&&newData.child('k').val()==='welcome'&&root.child('groups/'+$gid+'/kind').val()==='main'&&newData.parent().parent().parent().child('welcomed').child($gid).child(auth.uid).exists()&&!root.child('welcomed/'+$gid+'/'+auth.uid).exists())||(root.child('groups/'+$gid+'/locked').val()!==true)||((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||root.child('groupAdmins/'+$gid+'/'+auth.uid).exists())||(newData.child('type').val()==='sys'&&(root.child('groups/'+$gid+'/kind').val()==='ads'||root.child('groups/'+$gid+'/kind').val()==='shop'||root.child('groups/'+$gid+'/kind').val()==='news'))))||(data.exists()&&!newData.exists()&&(data.child('from').val()===auth.uid||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||(root.child('groupAdmins/'+$gid+'/'+auth.uid).exists()&&!(root.child('roles/'+data.child('from').val()).val()==='dev'||data.child('from').val()===root.child('config/emperorUid').val())))))",
           ".validate": "newData.hasChildren(['from','type','ts'])&&((newData.child('type').val()==='text'||newData.child('type').val()==='sys')&&newData.hasChild('text')||newData.child('type').val()==='image'&&newData.hasChild('img')||newData.child('type').val()==='sticker'&&newData.hasChild('sid'))",
           "from": {
             ".validate": "newData.isString()"
@@ -278,6 +419,15 @@
           },
           "k": {
             ".validate": "newData.isString()&&newData.val().length<=12"
+          },
+          "d": {
+            ".validate": "newData.isString()&&newData.val().length<=1400"
+          },
+          "vis": {
+            ".validate": "newData.val()===true"
+          },
+          "f": {
+            ".validate": "newData.isString()&&newData.val().length<=30"
           },
           "img": {
             ".validate": "newData.isString()&&(newData.val().beginsWith('data:image/jpeg;base64,')||newData.val().beginsWith('data:image/webp;base64,'))&&newData.val().length<60000"
