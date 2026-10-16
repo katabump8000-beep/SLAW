@@ -69,7 +69,7 @@ input:focus{border-color:#ffd9a8}
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import{getAuth,signInAnonymously,GoogleAuthProvider,signInWithPopup,signInWithCredential,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import{getDatabase,ref,get,set,update,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import{getDatabase,ref,get,set,update,serverTimestamp,increment}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 const app=initializeApp({apiKey:"AIzaSyBlIyelgyQBD0jHPpKve2TOjH1OnZS5LMs",authDomain:"slaw-3a991.firebaseapp.com",databaseURL:"https://slaw-3a991-default-rtdb.europe-west1.firebasedatabase.app",projectId:"slaw-3a991",storageBucket:"slaw-3a991.firebasestorage.app",messagingSenderId:"989570314649",appId:"1:989570314649:web:cb29cd40127e93f2a0e308"});
 const auth=getAuth(app),db=getDatabase(app);
 const $=i=>document.getElementById(i);
@@ -97,7 +97,9 @@ async function deviceHash(){
   const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('fir|'+id));
   return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
 }
-const rnd8=()=>String(Math.floor(Math.random()*1e8)).padStart(8,'0');
+
+/* ---------- دخول تلقائي إن كان مسجلاً ---------- */
+onAuthStateChanged(auth,async u=>{if(!u||busy)return;try{if((await get(ref(db,'profiles/'+u.uid))).exists())location.replace('chat.html')}catch(e){}});
 
 /* ---------- واجهة ---------- */
 let G='';
@@ -126,23 +128,20 @@ $('go').onclick=async()=>{
     if(!dv.exists())await set(ref(db,'devices/'+h),uid);
     if(!(await get(ref(db,'deviceOf/'+uid))).exists())await set(ref(db,'deviceOf/'+uid),h);
     // رمز إحالة المدعو (اختياري) — نتحقق قبل إنشاء الحساب
-    let refUid='';
+    let refUid='',refG='';
     if(code){
       const r=await get(ref(db,'refCodes/'+code));
-      if(!r.exists()||r.val()===uid)throw new Error('badref');
-      refUid=r.val();
+      if(!r.exists()||r.val().u===uid)throw new Error('badref');
+      refUid=r.val().u;refG=r.val().g;
     }
     // الملف التعريفي + الرصيد الابتدائي 100
-    const myCode=rnd8();
-    await set(ref(db,'profiles/'+uid),{name,gender:G,ts:Date.now(),color:'#ff7a1a',ref:myCode});
+    await set(ref(db,'profiles/'+uid),{name,gender:G,ts:Date.now(),color:'#ff7a1a'});
     await update(ref(db),{['wallets/'+uid+'/bal']:100,['wallets/'+uid+'/ts']:serverTimestamp()});
-    try{await set(ref(db,'refCodes/'+myCode),uid)}catch(e){}
     // مكافأة الداعي +100
     if(refUid){
       try{
-        await set(ref(db,'refClaims/'+uid),refUid);
-        const b=(await get(ref(db,'wallets/'+refUid+'/bal'))).val();
-        if(typeof b==='number')await update(ref(db),{['refPaid/'+uid]:true,['wallets/'+refUid+'/bal']:b+100});
+        await set(ref(db,'refClaims/'+uid),code);
+        await update(ref(db),{['refPaid/'+uid]:true,['wallets/'+refUid+'/bal']:increment(100),['members/'+refG+'/'+uid]:true});
       }catch(e){}
     }
     finish(name);
@@ -155,7 +154,7 @@ $('go').onclick=async()=>{
   }
   busy=false;$('go').disabled=false;
 };
-function finish(name){show(2);$('done').textContent='أهلاً '+name+'، تم تسجيل الدخول ✅';busy=false;$('go').disabled=false}
+function finish(name){show(2);$('done').textContent='أهلاً '+name+'، تم تسجيل الدخول ✅';busy=false;$('go').disabled=false;setTimeout(()=>location.replace('chat.html'),600)}
 
 /* ---------- باب المطورين السري: النقطة الخضراء × 17 ---------- */
 let taps=0,tm=0;
