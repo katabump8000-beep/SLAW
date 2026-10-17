@@ -83,3 +83,9 @@ input,textarea,select{font:inherit;color:var(--tx);background:rgba(0,0,0,.3);bor
 .wb{padding:8px 12px;text-align:center;font-size:13.5px;background:linear-gradient(90deg,#7a1500,#c93a00);border-bottom:1px solid var(--line);flex:none}.wb.def{background:linear-gradient(90deg,#5a0000,#a40000)}
 .lv{display:flex;gap:10px}.lv>div{flex:1;text-align:center;padding:10px;border-radius:12px;background:rgba(0,0,0,.3);border:1px solid var(--line);display:flex;flex-direction:column;gap:4px}.lv b{font-size:26px;color:var(--or2)}
 .err{color:#ffd0c0;min-height:18px;font-size:13px}
+.clash{display:flex;justify-content:center;font-size:34px;direction:ltr;overflow:hidden}
+.clash span:first-child{animation:c1 .9s ease-in-out infinite alternate}.clash span:last-child{animation:c2 .9s ease-in-out infinite alternate;display:inline-block;transform:scaleX(-1)}
+.clash.s{font-size:20px}
+@keyframes c1{0%{transform:translateX(-26px) rotate(-25deg)}100%{transform:translateX(4px) rotate(10deg)}}
+@keyframes c2{0%{transform:scaleX(-1) translateX(-26px) rotate(-25deg)}100%{transform:scaleX(-1) translateX(4px) rotate(10deg)}}
+.bub audio{max-width:100%}
