@@ -33,6 +33,7 @@ jobs:
           rm -rf www
           mkdir www
           cp index.html chat.js chat.css chat.html click.mp3 manifest.json icon-192.png icon-512.png www/
+          cp *.mp3 www/ 2>/dev/null || true
 
       - name: Add Android platform
         run: npx cap add android
