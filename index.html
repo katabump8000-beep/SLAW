@@ -66,6 +66,7 @@ input:focus{border-color:#ffd9a8}
  <div class="err" id="ger"></div>
 </div></div>
 
+<script>if(localStorage.getItem('fir_in')){document.documentElement.style.visibility='hidden';location.replace('chat.html')}</script>
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import{getAuth,signInAnonymously,GoogleAuthProvider,signInWithPopup,signInWithCredential,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -99,7 +100,7 @@ async function deviceHash(){
 }
 
 /* ---------- دخول تلقائي إن كان مسجلاً ---------- */
-onAuthStateChanged(auth,async u=>{if(!u||busy)return;try{if((await get(ref(db,'profiles/'+u.uid))).exists())location.replace('chat.html')}catch(e){}});
+onAuthStateChanged(auth,async u=>{if(!u||busy)return;try{if((await get(ref(db,'profiles/'+u.uid))).exists()){localStorage.setItem('fir_in','1');location.replace('chat.html')}}catch(e){}});
 
 /* ---------- واجهة ---------- */
 let G='';
@@ -175,6 +176,12 @@ $('gg').onclick=async()=>{
   }catch(e){const m=String(e&&(e.message||e.code)||e);if(!/cancel|dismiss|12501|16|closed/i.test(m))$('ger').textContent='خطأ: '+m.slice(0,100)}
   busy=false;
 };
+
+/* مؤثرات صوتية: خطأ + نقر */
+{const snd=n=>{try{const a=new Audio(n);a.volume=.7;a.play().catch(()=>{})}catch(e){}};
+ const er=document.getElementById('er');
+ if(er)new MutationObserver(()=>{if(er.textContent.trim())snd('fff.mp3')}).observe(er,{childList:true,characterData:true,subtree:true});
+ document.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closest('button,.btn,.chip,.opt,.gb'))snd('XML.mp3')},true);}
 </script>
 </body>
 </html>
