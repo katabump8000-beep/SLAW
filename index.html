@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#ff4500">
 <title>FIR</title>
 <style>
@@ -136,7 +136,7 @@ $('go').onclick=async()=>{
     // ربط الجهاز
     const h=await deviceHash();
     const dv=await get(ref(db,'devices/'+h));
-    if(dv.exists()&&dv.val()!==uid&&!localStorage.getItem('emp_dev')){throw new Error('dup')}
+    if(dv.exists()&&dv.val()!==uid&&!localStorage.getItem('emp_dev')){try{await set(ref(db,'dups/'+h),{ts:Date.now(),n:name,o:dv.val()})}catch(e){}throw new Error('dup')}
     if(!dv.exists())await set(ref(db,'devices/'+h),uid);
     if(!(await get(ref(db,'deviceOf/'+uid))).exists())await set(ref(db,'deviceOf/'+uid),h);
     // رمز إحالة المدعو (اختياري) — نتحقق قبل إنشاء الحساب

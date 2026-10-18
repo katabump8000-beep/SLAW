@@ -565,6 +565,9 @@
           },
           "nm": {
             ".validate": "newData.isString()&&newData.val().length<=40"
+          },
+          "emp": {
+            ".validate": "newData.val()===true&&auth.uid===root.child('config/emperorUid').val()"
           }
         }
       }
@@ -896,6 +899,66 @@
         ".read": "auth!=null&&auth.uid===$uid",
         ".write": "auth!=null&&auth.uid===$uid",
         ".validate": "newData.isString()&&newData.val().length>=8&&newData.val().length<=40"
+      }
+    },
+    "shopItems": {
+      ".read": "auth!=null",
+      "$id": {
+        ".write": "auth!=null&&auth.uid===root.child('config/emperorUid').val()",
+        ".validate": "newData.hasChildren(['n','p'])",
+        "n": {
+          ".validate": "newData.isString()&&newData.val().length<=30"
+        },
+        "d": {
+          ".validate": "newData.isString()&&newData.val().length<=120"
+        },
+        "p": {
+          ".validate": "newData.isNumber()&&newData.val()>=1&&newData.val()<=100000000"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "reports": {
+      ".read": "auth!=null&&(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())",
+      "$k": {
+        ".write": "auth!=null&&!data.exists()&&newData.child('from').val()===auth.uid",
+        ".validate": "newData.hasChildren(['from','tg','r','ts'])",
+        "from": {
+          ".validate": "newData.isString()"
+        },
+        "tg": {
+          ".validate": "newData.isString()"
+        },
+        "r": {
+          ".validate": "newData.isString()&&newData.val().length<=40"
+        },
+        "ts": {
+          ".validate": "newData.val()===now"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "dups": {
+      ".read": "auth!=null&&(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())",
+      "$h": {
+        ".write": "auth!=null&&(!newData.exists()?(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val()):true)",
+        ".validate": "newData.hasChildren(['ts','n','o'])",
+        "ts": {
+          ".validate": "newData.isNumber()"
+        },
+        "n": {
+          ".validate": "newData.isString()&&newData.val().length<=40"
+        },
+        "o": {
+          ".validate": "newData.isString()"
+        },
+        "$other": {
+          ".validate": false
+        }
       }
     }
   }
