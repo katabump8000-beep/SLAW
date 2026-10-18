@@ -34,6 +34,7 @@ jobs:
           mkdir www
           cp index.html chat.js chat.css chat.html click.mp3 manifest.json icon-192.png icon-512.png www/
           cp *.mp3 www/ 2>/dev/null || true
+          sed -i "s/__BUILD__/${{ github.run_number }}/g; s#__REPO__#${{ github.repository }}#g" www/chat.js www/chat.html
 
       - name: Add Android platform
         run: npx cap add android
