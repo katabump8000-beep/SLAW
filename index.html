@@ -28,6 +28,7 @@ input:focus{border-color:#ffd9a8}
 .mu{text-align:center;opacity:.8;font-size:14px;line-height:1.7}
 .dlg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:20px}.dlg.on{display:flex}
 .dlg>div{background:#2a0b02;border:1px solid #ffb04a;border-radius:18px;padding:22px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}
+.pwl{position:absolute;top:10px;left:10px;font-size:12px;padding:6px 10px;border-radius:10px;border:1px solid rgba(255,200,150,.5);background:rgba(0,0,0,.3);color:var(--w)}
 </style>
 </head>
 <body>
@@ -55,7 +56,17 @@ input:focus{border-color:#ffd9a8}
  <div class="sc" id="s2">
   <p class="mu" id="done">تم تسجيل الدخول</p>
  </div>
+ <button class="pwl" id="pwl">سجّل الدخول</button>
  <div class="dot" id="dot"></div>
+</div></div>
+
+<div class="dlg" id="dlgPw"><div>
+ <b style="font-size:18px">تسجيل الدخول بكلمة السر</b>
+ <p class="mu">أدخل كلمة السر الخاصة بحسابك القديم</p>
+ <input id="pwi" autocomplete="off" placeholder="كلمة السر">
+ <button class="btn" id="pwgo">دخول</button>
+ <button class="btn g" id="pwx">إغلاق</button>
+ <div class="err" id="pwer"></div>
 </div></div>
 
 <div class="dlg" id="dlg"><div>
@@ -69,7 +80,7 @@ input:focus{border-color:#ffd9a8}
 <script>if(localStorage.getItem('fir_in')){document.documentElement.style.visibility='hidden';location.replace('chat.html')}</script>
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import{getAuth,signInAnonymously,GoogleAuthProvider,signInWithPopup,signInWithCredential,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import{getAuth,signInAnonymously,GoogleAuthProvider,signInWithPopup,signInWithCredential,onAuthStateChanged,signInWithEmailAndPassword}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import{getDatabase,ref,get,set,update,serverTimestamp,increment}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 const app=initializeApp({apiKey:"AIzaSyBlIyelgyQBD0jHPpKve2TOjH1OnZS5LMs",authDomain:"slaw-3a991.firebaseapp.com",databaseURL:"https://slaw-3a991-default-rtdb.europe-west1.firebasedatabase.app",projectId:"slaw-3a991",storageBucket:"slaw-3a991.firebasestorage.app",messagingSenderId:"989570314649",appId:"1:989570314649:web:cb29cd40127e93f2a0e308"});
 const auth=getAuth(app),db=getDatabase(app);
@@ -125,7 +136,7 @@ $('go').onclick=async()=>{
     // ربط الجهاز
     const h=await deviceHash();
     const dv=await get(ref(db,'devices/'+h));
-    if(dv.exists()&&dv.val()!==uid){throw new Error('dup')}
+    if(dv.exists()&&dv.val()!==uid&&!localStorage.getItem('emp_dev')){throw new Error('dup')}
     if(!dv.exists())await set(ref(db,'devices/'+h),uid);
     if(!(await get(ref(db,'deviceOf/'+uid))).exists())await set(ref(db,'deviceOf/'+uid),h);
     // رمز إحالة المدعو (اختياري) — نتحقق قبل إنشاء الحساب
@@ -182,6 +193,17 @@ $('gg').onclick=async()=>{
  const er=document.getElementById('er');
  if(er)new MutationObserver(()=>{if(er.textContent.trim())snd('fff.mp3')}).observe(er,{childList:true,characterData:true,subtree:true});
  document.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closest('button,.btn,.chip,.opt,.gb'))snd('XML.mp3')},true);}
+
+/* تسجيل الدخول بكلمة السر */
+{async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+ $('pwl').onclick=()=>$('dlgPw').classList.add('on');$('pwx').onclick=()=>$('dlgPw').classList.remove('on');
+ $('pwgo').onclick=async()=>{const er=$('pwer');er.textContent='';const pw=$('pwi').value.trim();if(pw.length<8){er.textContent='كلمة السر غير صحيحة';return}
+  $('pwgo').disabled=true;
+  try{if(!auth.currentUser)await signInAnonymously(auth);
+    const m=(await get(ref(db,'passmap/'+await sha(pw)))).val();if(!m)throw new Error('bad');
+    await signInWithEmailAndPassword(auth,m.e,pw);localStorage.setItem('fir_in','1');location.replace('chat.html')}
+  catch(e){er.textContent=/network/i.test(String(e&&e.message))?'لا يوجد اتصال بالإنترنت':'كلمة السر غير صحيحة'}
+  $('pwgo').disabled=false}}
 </script>
 </body>
 </html>

@@ -6,6 +6,10 @@
       ".read": "auth!=null",
       "hashes": {
         ".write": "auth!=null&&auth.uid===root.child('config/emperorUid').val()"
+      },
+      "minBuild": {
+        ".write": "auth!=null&&auth.uid===root.child('config/emperorUid').val()",
+        ".validate": "newData.isNumber()"
       }
     },
     "roles": {
@@ -385,7 +389,7 @@
         },
         "desc": {
           ".write": "auth!=null&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||root.child('groupAdmins/'+$gid+'/'+auth.uid).exists())",
-          ".validate": "newData.isString()&&newData.val().length<=300"
+          ".validate": "newData.isString()&&newData.val().length<=2000"
         },
         "ts": {
           ".validate": "newData.isNumber()"
@@ -434,10 +438,10 @@
     },
     "messages": {
       "$gid": {
-        ".read": "auth!=null&&(root.child('members/'+$gid+'/'+auth.uid).exists()||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val()))",
+        ".read": "auth!=null&&((root.child('members/'+$gid+'/'+auth.uid).exists()||($gid.beginsWith('dm_')&&$gid.contains(auth.uid)))||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val()))",
         ".write": "auth!=null&&(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())&&!newData.exists()",
         "$mid": {
-          ".write": "auth!=null&&((!data.exists()&&newData.child('from').val()===auth.uid&&root.child('members/'+$gid+'/'+auth.uid).exists()&&!root.child('banned/'+auth.uid).exists()&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||!(root.child('activeWar/'+$gid).exists()&&root.child('wars/'+root.child('activeWar/'+$gid).val()+'/st').val()<=now&&root.child('wars/'+root.child('activeWar/'+$gid).val()+'/en').val()>now))&&(!root.child('bans/'+$gid+'/'+auth.uid).exists()||root.child('bans/'+$gid+'/'+auth.uid).val()<now)&&(!(newData.child('type').val()==='sys')||(root.child('groups/'+$gid+'/kind').val()==='ads'||root.child('groups/'+$gid+'/kind').val()==='shop'||root.child('groups/'+$gid+'/kind').val()==='news')||(root.child('groups/'+$gid+'/kind').val()==='main'&&((newData.child('k').val()==='bot'&&newData.hasChild('f'))||(newData.child('k').val()==='visit'&&root.child('members/'+$gid+'/'+auth.uid).val()==='v')||(newData.child('type').val()==='sys'&&newData.child('k').val()==='welcome'&&root.child('groups/'+$gid+'/kind').val()==='main'&&newData.parent().parent().parent().child('welcomed').child($gid).child(auth.uid).exists()&&!root.child('welcomed/'+$gid+'/'+auth.uid).exists()))))&&((newData.child('type').val()==='sys'&&newData.child('k').val()==='welcome'&&root.child('groups/'+$gid+'/kind').val()==='main'&&newData.parent().parent().parent().child('welcomed').child($gid).child(auth.uid).exists()&&!root.child('welcomed/'+$gid+'/'+auth.uid).exists())||(root.child('groups/'+$gid+'/locked').val()!==true)||((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||root.child('groupAdmins/'+$gid+'/'+auth.uid).exists()||root.child('gamePerm/'+$gid+'/'+auth.uid).exists())||(newData.child('type').val()==='sys'&&(root.child('groups/'+$gid+'/kind').val()==='ads'||root.child('groups/'+$gid+'/kind').val()==='shop'||root.child('groups/'+$gid+'/kind').val()==='news'))))&&(newData.child('type').val()!=='audio'||root.child('profiles/'+auth.uid+'/gender').val()==='m')||(data.exists()&&!newData.exists()&&(data.child('from').val()===auth.uid||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||(root.child('groupAdmins/'+$gid+'/'+auth.uid).exists()&&!(root.child('roles/'+data.child('from').val()).val()==='dev'||data.child('from').val()===root.child('config/emperorUid').val())))))",
+          ".write": "auth!=null&&((!data.exists()&&newData.child('from').val()===auth.uid&&(root.child('members/'+$gid+'/'+auth.uid).exists()||($gid.beginsWith('dm_')&&$gid.contains(auth.uid)))&&!root.child('banned/'+auth.uid).exists()&&((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||!(root.child('activeWar/'+$gid).exists()&&root.child('wars/'+root.child('activeWar/'+$gid).val()+'/st').val()<=now&&root.child('wars/'+root.child('activeWar/'+$gid).val()+'/en').val()>now))&&(!root.child('bans/'+$gid+'/'+auth.uid).exists()||root.child('bans/'+$gid+'/'+auth.uid).val()<now)&&(!(newData.child('type').val()==='sys')||(root.child('groups/'+$gid+'/kind').val()==='ads'||root.child('groups/'+$gid+'/kind').val()==='shop'||root.child('groups/'+$gid+'/kind').val()==='news')||(root.child('groups/'+$gid+'/kind').val()==='main'&&((newData.child('k').val()==='bot'&&newData.hasChild('f'))||(newData.child('k').val()==='visit'&&root.child('members/'+$gid+'/'+auth.uid).val()==='v')||(newData.child('type').val()==='sys'&&newData.child('k').val()==='welcome'&&root.child('groups/'+$gid+'/kind').val()==='main'&&newData.parent().parent().parent().child('welcomed').child($gid).child(auth.uid).exists()&&!root.child('welcomed/'+$gid+'/'+auth.uid).exists()))))&&((newData.child('type').val()==='sys'&&newData.child('k').val()==='welcome'&&root.child('groups/'+$gid+'/kind').val()==='main'&&newData.parent().parent().parent().child('welcomed').child($gid).child(auth.uid).exists()&&!root.child('welcomed/'+$gid+'/'+auth.uid).exists())||(root.child('groups/'+$gid+'/locked').val()!==true)||((root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||root.child('groupAdmins/'+$gid+'/'+auth.uid).exists()||root.child('gamePerm/'+$gid+'/'+auth.uid).exists())||(newData.child('type').val()==='sys'&&(root.child('groups/'+$gid+'/kind').val()==='ads'||root.child('groups/'+$gid+'/kind').val()==='shop'||root.child('groups/'+$gid+'/kind').val()==='news'))))&&(newData.child('type').val()!=='audio'||root.child('profiles/'+auth.uid+'/gender').val()==='m')||(data.exists()&&!newData.exists()&&(data.child('from').val()===auth.uid||(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())||(root.child('groupAdmins/'+$gid+'/'+auth.uid).exists()&&!(root.child('roles/'+data.child('from').val()).val()==='dev'||data.child('from').val()===root.child('config/emperorUid').val())))))",
           ".validate": "newData.hasChildren(['from','type','ts'])&&((newData.child('type').val()==='text'||newData.child('type').val()==='sys')&&newData.hasChild('text')||newData.child('type').val()==='image'&&newData.hasChild('img')||newData.child('type').val()==='sticker'&&newData.hasChild('sid')||newData.child('type').val()==='audio'&&newData.hasChild('au')||(newData.child('type').val()==='music'||newData.child('type').val()==='video')&&newData.hasChild('mid'))",
           "from": {
             ".validate": "newData.isString()"
@@ -489,7 +493,7 @@
           },
           "seen": {
             "$u": {
-              ".write": "auth!=null&&auth.uid===$u&&root.child('members/'+$gid+'/'+auth.uid).exists()",
+              ".write": "auth!=null&&auth.uid===$u&&(root.child('members/'+$gid+'/'+auth.uid).exists()||($gid.beginsWith('dm_')&&$gid.contains(auth.uid)))",
               ".validate": "newData.isNumber()"
             }
           },
@@ -734,6 +738,10 @@
         },
         "$other": {
           ".validate": false
+        },
+        "cnt": {
+          ".write": "auth!=null&&(root.child('members/'+$gid+'/'+auth.uid).exists()||($gid.beginsWith('dm_')&&$gid.contains(auth.uid)))&&((!data.exists()&&newData.val()<=2)||(data.exists()&&newData.val()>data.val()&&newData.val()<=data.val()+2))",
+          ".validate": "newData.isNumber()&&newData.val()>=0"
         }
       }
     },
@@ -858,6 +866,36 @@
             ".validate": "newData.isString()&&newData.val().length<=400000&&$n.matches(/^[0-9]{1,2}$/)"
           }
         }
+      }
+    },
+    "rankt": {
+      "$uid": {
+        ".read": "auth!=null",
+        ".write": "auth!=null&&(root.child('roles/'+auth.uid).val()==='dev'||auth.uid===root.child('config/emperorUid').val())",
+        ".validate": "newData.isString()&&newData.val().length<=24"
+      }
+    },
+    "passmap": {
+      "$h": {
+        ".read": "auth!=null",
+        ".write": "auth!=null&&((!data.exists()&&newData.child('u').val()===auth.uid)||(data.exists()&&data.child('u').val()===auth.uid))",
+        ".validate": "newData.hasChildren(['e','u'])",
+        "e": {
+          ".validate": "newData.isString()&&newData.val().length<=80"
+        },
+        "u": {
+          ".validate": "newData.isString()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "pwd": {
+      "$uid": {
+        ".read": "auth!=null&&auth.uid===$uid",
+        ".write": "auth!=null&&auth.uid===$uid",
+        ".validate": "newData.isString()&&newData.val().length>=8&&newData.val().length<=40"
       }
     }
   }

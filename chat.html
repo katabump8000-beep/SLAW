@@ -12,6 +12,21 @@
 <div id="sheet" class="sheet"></div>
 <div id="toast"></div>
 <input type="file" id="fileIn" accept="image/*" hidden>
-<script type="module" src="chat.js"></script>
+<script type="module">
+/* تحديث تلقائي: يعمل بآخر نسخة من المستودع بدون إعادة تثبيت */
+const BUILD='__BUILD__',REPO='__REPO__',ok=BUILD.indexOf('__')<0&&REPO.indexOf('__')<0,K=n=>'ota_'+n+'_'+BUILD;
+window.__BUILD=ok?Number(BUILD):0;window.__REPO=ok?REPO:'';
+let js=null,css=null;try{if(ok){js=localStorage.getItem(K('js'));css=localStorage.getItem(K('css'))}}catch(e){}
+if(css){const s=document.createElement('style');s.id='ota';s.textContent=css;document.head.append(s)}
+(async()=>{
+  if(js){try{await import(URL.createObjectURL(new Blob([js],{type:'text/javascript'})));return}catch(e){try{localStorage.removeItem(K('js'))}catch(x){}}}
+  await import('./chat.js');
+})();
+if(ok)setTimeout(async()=>{try{
+  for(const[n,f]of[['js','chat.js'],['css','chat.css']]){
+    const r=await fetch('https://raw.githubusercontent.com/'+REPO+'/HEAD/'+f+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)continue;
+    const t=await r.text();if(t.length<5000||(f==='chat.js'&&t.indexOf('initExtra')<0))continue;localStorage.setItem(K(n),t)}
+}catch(e){}},5000);
+</script>
 </body>
 </html>
